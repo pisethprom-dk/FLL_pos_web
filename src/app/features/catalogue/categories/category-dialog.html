@@ -1,0 +1,111 @@
+<!-- v1.0.0 -->
+<form [formGroup]="form" (ngSubmit)="save()" novalidate>
+  <div class="modal-head">
+    <h3 id="category-title">{{ category ? 'Edit ' + category.name : 'Add category' }}</h3>
+    <div class="spacer"></div>
+    <button type="button" class="modal-x" aria-label="Close" (click)="ref.close()">&times;</button>
+  </div>
+  <div class="form">
+    <div class="form-grid">
+      <div class="field">
+        <label for="cat-code">Code</label>
+        <input
+          id="cat-code"
+          type="text"
+          formControlName="code"
+          placeholder="CAT-06"
+          cdkFocusInitial
+        />
+        @if (form.controls.code.touched && form.controls.code.invalid) {
+          <span class="hint warn">Enter a code of up to 20 characters.</span>
+        }
+        @for (message of errorsFor('code'); track $index) {
+          <span class="hint warn">{{ message }}</span>
+        }
+      </div>
+      <div class="field">
+        <label for="cat-order">Display order</label>
+        <input id="cat-order" type="number" formControlName="display_order" />
+        @for (message of errorsFor('display_order'); track $index) {
+          <span class="hint warn">{{ message }}</span>
+        }
+      </div>
+      <div class="field wide">
+        <label for="cat-name">Name</label>
+        <input id="cat-name" type="text" formControlName="name" placeholder="Power tools" />
+        @if (form.controls.name.touched && form.controls.name.invalid) {
+          <span class="hint warn">Enter a name of up to 100 characters.</span>
+        }
+        @for (message of errorsFor('name'); track $index) {
+          <span class="hint warn">{{ message }}</span>
+        }
+      </div>
+      <div class="field wide">
+        <label for="cat-kh">Name in Khmer</label>
+        <input id="cat-kh" type="text" formControlName="name_kh" lang="km" />
+        @for (message of errorsFor('name_kh'); track $index) {
+          <span class="hint warn">{{ message }}</span>
+        }
+      </div>
+      <div class="field wide">
+        <label for="cat-parent">Parent category</label>
+        <select id="cat-parent" formControlName="parent">
+          <option [ngValue]="null">— None (top level) —</option>
+          @for (parent of parents; track parent.id) {
+            <option [ngValue]="parent.id">{{ parent.name }}</option>
+          }
+        </select>
+        @if (data.hasChildren) {
+          <span class="hint">It has sub-categories, so it stays top level.</span>
+        } @else {
+          <span class="hint"
+            >Only top-level categories can be chosen — two levels is the limit.</span
+          >
+        }
+        @for (message of errorsFor('parent'); track $index) {
+          <span class="hint warn">{{ message }}</span>
+        }
+      </div>
+      <div class="field wide">
+        <label for="cat-desc">Description</label>
+        <input id="cat-desc" type="text" formControlName="description" />
+        @for (message of errorsFor('description'); track $index) {
+          <span class="hint warn">{{ message }}</span>
+        }
+      </div>
+      <div class="field">
+        <label for="cat-image">Image</label>
+        <app-image-field
+          inputId="cat-image"
+          [current]="category?.image"
+          [choice]="image()"
+          (choiceChange)="pickImage($event)"
+        />
+        @for (message of errorsFor('image'); track $index) {
+          <span class="hint warn">{{ message }}</span>
+        }
+      </div>
+      <div class="field">
+        <label class="check" style="margin-top: 22px">
+          <input type="checkbox" formControlName="is_active" />
+          <span>Active — offered for new products</span>
+        </label>
+      </div>
+    </div>
+    @for (message of formErrors(); track $index) {
+      <p class="form-error" role="alert">{{ message }}</p>
+    }
+  </div>
+  <div class="form-foot">
+    <button class="btn" type="submit" [disabled]="busy()">
+      {{ busy() ? 'Saving…' : 'Save category' }}
+    </button>
+    <button class="btn ghost" type="button" (click)="ref.close()">Cancel</button>
+    @if (category && category.is_active !== false) {
+      <div class="spacer"></div>
+      <button class="btn danger" type="button" [disabled]="busy()" (click)="deactivate()">
+        Deactivate
+      </button>
+    }
+  </div>
+</form>

@@ -1,0 +1,15 @@
+// v1.0.0 — a vertical progress list (claim steps).
+.steps{list-style:none;margin:0;padding:0;}
+.steps li{position:relative;padding:0 0 16px 26px;font-size:13.5px;}
+.steps li::before{
+  content:"";position:absolute;left:5px;top:4px;width:9px;height:9px;border-radius:50%;
+  background:var(--surface);border:2px solid var(--line-strong);
+}
+.steps li::after{content:"";position:absolute;left:9px;top:15px;bottom:0;width:1px;background:var(--line);}
+.steps li:last-child{padding-bottom:0;}
+.steps li:last-child::after{display:none;}
+.steps li.done::before{background:var(--good);border-color:var(--good);}
+.steps li.now::before{background:var(--khr);border-color:var(--khr);}
+.steps li.now{font-weight:600;}
+.steps li.todo{color:var(--muted);}
+.steps .when{display:block;font-size:12px;color:var(--muted);font-weight:400;margin-top:1px;}

@@ -1,0 +1,20 @@
+<!-- v1.0.0 -->
+<nav class="pager" aria-label="Pages">
+  <span class="pager-range">{{ first() }}–{{ last() }} of {{ count() }}</span>
+  <button
+    type="button"
+    class="btn ghost"
+    [disabled]="page() <= 1"
+    (click)="pageChange.emit(page() - 1)"
+  >
+    Previous
+  </button>
+  <button
+    type="button"
+    class="btn ghost"
+    [disabled]="last() >= count()"
+    (click)="pageChange.emit(page() + 1)"
+  >
+    Next
+  </button>
+</nav>

@@ -1,0 +1,45 @@
+// v1.2.0 — the today band, figure tiles and the two bar charts.
+// Changed: the band in the sidebar's deep teal (option A).
+.band{
+  background:var(--side);color:#fff;border-radius:var(--radius);
+  padding:22px 26px;display:flex;gap:40px;flex-wrap:wrap;align-items:flex-end;margin-bottom:20px;
+}
+.band .lead{flex:1 1 260px;}
+.band .lead small{color:#8FA3B1;font-size:12.5px;display:block;margin-bottom:4px;}
+.band .usd{font-size:40px;font-weight:600;line-height:1.05;letter-spacing:-.02em;}
+.band .khr{color:#E0B463;font-size:16px;font-weight:500;margin-top:4px;}
+.band .split{display:flex;gap:34px;flex-wrap:wrap;}
+.band .split div small{display:block;color:#8FA3B1;font-size:12.5px;margin-bottom:3px;}
+.band .split div b{font-size:19px;font-weight:600;}
+
+.tiles{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line);
+  border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;margin-bottom:26px;}
+.tile{background:var(--surface);padding:16px 18px;}
+.tile small{display:block;color:var(--muted);font-size:12.5px;margin-bottom:5px;}
+.tile b{font-size:22px;font-weight:600;display:block;letter-spacing:-.01em;}
+.tile .sub{font-size:12.5px;margin-top:3px;color:var(--khr);}
+.tile .sub.alert{color:var(--warn);font-weight:500;}
+.tile .sub.ok{color:var(--good);}
+
+.bars{display:flex;align-items:flex-end;gap:10px;height:150px;}
+.bars .col{flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;height:100%;justify-content:flex-end;}
+.bars .bar{width:100%;background:var(--ink-soft);border-radius:2px 2px 0 0;}
+.bars .col.today .bar{background:var(--khr);}
+.bars .cap{font-size:11.5px;color:var(--muted);}
+.bars .val{font-size:11.5px;color:var(--ink);font-variant-numeric:tabular-nums;}
+
+.hbar{margin-bottom:13px;}
+.hbar:last-child{margin-bottom:0;}
+.hbar .row{display:flex;justify-content:space-between;font-size:13px;margin-bottom:4px;}
+.hbar .track{height:8px;background:#EDEAE3;border-radius:2px;overflow:hidden;}
+.hbar .fill{height:100%;background:var(--ink-soft);border-radius:2px;}
+
+@media (max-width:1000px){
+  .tiles{grid-template-columns:repeat(2,1fr);}
+}
+@media (max-width:760px){
+  .band .usd{font-size:32px;}
+}
+// Added: a row of three tiles, where only three figures are true.
+.tiles.three{grid-template-columns:repeat(3,1fr);}
+@media (max-width:620px){.tiles.three{grid-template-columns:1fr;}}

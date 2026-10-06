@@ -1,0 +1,74 @@
+<!-- v1.0.0 -->
+<form [formGroup]="form" (ngSubmit)="save()" novalidate>
+  <div class="modal-head">
+    <h3 id="unit-title">{{ unit ? 'Edit ' + unit.name : 'Add unit' }}</h3>
+    <div class="spacer"></div>
+    <button type="button" class="modal-x" aria-label="Close" (click)="ref.close()">&times;</button>
+  </div>
+  <div class="form">
+    <div class="form-grid">
+      <div class="field">
+        <label for="unit-code">Code</label>
+        <input
+          id="unit-code"
+          type="text"
+          formControlName="code"
+          placeholder="BX100"
+          cdkFocusInitial
+        />
+        <span class="hint">Short and unique, e.g. PCS or BX100.</span>
+        @if (form.controls.code.touched && form.controls.code.invalid) {
+          <span class="hint warn">Enter a code of up to 20 characters.</span>
+        }
+        @for (message of errorsFor('code'); track $index) {
+          <span class="hint warn">{{ message }}</span>
+        }
+      </div>
+      <div class="field">
+        <label for="unit-order">Display order</label>
+        <input id="unit-order" type="number" formControlName="display_order" />
+        @for (message of errorsFor('display_order'); track $index) {
+          <span class="hint warn">{{ message }}</span>
+        }
+      </div>
+      <div class="field">
+        <label for="unit-name">Name</label>
+        <input id="unit-name" type="text" formControlName="name" placeholder="Box of 100" />
+        @if (form.controls.name.touched && form.controls.name.invalid) {
+          <span class="hint warn">Enter a name of up to 50 characters.</span>
+        }
+        @for (message of errorsFor('name'); track $index) {
+          <span class="hint warn">{{ message }}</span>
+        }
+      </div>
+      <div class="field">
+        <label for="unit-kh">Name in Khmer</label>
+        <input id="unit-kh" type="text" formControlName="name_kh" lang="km" />
+        @for (message of errorsFor('name_kh'); track $index) {
+          <span class="hint warn">{{ message }}</span>
+        }
+      </div>
+      <div class="field wide">
+        <label class="check">
+          <input type="checkbox" formControlName="is_active" />
+          <span>Active — offered for new products</span>
+        </label>
+      </div>
+    </div>
+    @for (message of formErrors(); track $index) {
+      <p class="form-error" role="alert">{{ message }}</p>
+    }
+  </div>
+  <div class="form-foot">
+    <button class="btn" type="submit" [disabled]="busy()">
+      {{ busy() ? 'Saving…' : 'Save unit' }}
+    </button>
+    <button class="btn ghost" type="button" (click)="ref.close()">Cancel</button>
+    @if (unit && unit.is_active !== false) {
+      <div class="spacer"></div>
+      <button class="btn danger" type="button" [disabled]="busy()" (click)="deactivate()">
+        Deactivate
+      </button>
+    }
+  </div>
+</form>

@@ -1,0 +1,15 @@
+<!-- v1.0.0 -->
+<div class="modal-head">
+  <h3 id="confirm-title">{{ data.title }}</h3>
+  <div class="spacer"></div>
+  <button type="button" class="modal-x" aria-label="Close" (click)="ref.close()">&times;</button>
+</div>
+<div class="form">
+  <p class="confirm-message">{{ data.message }}</p>
+</div>
+<div class="form-foot">
+  <button type="button" class="btn" [class.danger]="data.danger" (click)="ref.close(true)">
+    {{ data.confirmLabel }}
+  </button>
+  <button type="button" class="btn ghost" cdkFocusInitial (click)="ref.close()">Cancel</button>
+</div>

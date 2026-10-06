@@ -1,0 +1,28 @@
+<!-- v1.0.0 -->
+<div class="image-field">
+  @if (current() && choice().kind !== 'remove') {
+    <img [src]="current()" alt="The image saved now" />
+  }
+  <input #file type="file" accept="image/*" [id]="inputId()" (change)="pick($event)" />
+  @switch (choice().kind) {
+    @case ('keep') {
+      @if (current()) {
+        <span class="hint">
+          Choose a file to replace it, or
+          <button type="button" class="rowlink" (click)="remove()">remove it</button>.
+        </span>
+      }
+    }
+    @case ('replace') {
+      <span class="hint"
+        >{{ current() ? 'Replaces the image above' : 'Added' }} when you save.</span
+      >
+    }
+    @case ('remove') {
+      <span class="hint warn">
+        Removed when you save.
+        <button type="button" class="rowlink" (click)="undo()">Keep it</button>
+      </span>
+    }
+  }
+</div>

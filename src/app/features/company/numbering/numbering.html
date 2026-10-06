@@ -1,0 +1,55 @@
+<!-- v1.1.0 -->
+<div class="page">
+  <p class="page-intro">
+    The prefix in front of each document number. Quotation and invoice numbers are the prefix, the
+    date and a running number that starts again at 001 each day — QUO-20261005001. A new prefix
+    applies from the next number; numbers already issued keep theirs.
+  </p>
+
+  @if (counters.error(); as error) {
+    <app-load-error [error]="error" (retry)="counters.reload()" />
+  } @else if (counters.hasValue()) {
+    <form class="panel" [formGroup]="form" (ngSubmit)="save()" novalidate>
+      <div class="panel-head"><h3>Numbering</h3></div>
+      <div class="form">
+        <div class="form-grid">
+          @for (row of rows(); track row.type) {
+            <div class="field">
+              <label [for]="'prefix-' + row.type">{{ row.label }}</label>
+              <input
+                [id]="'prefix-' + row.type"
+                type="text"
+                [formControlName]="row.type"
+                autocapitalize="characters"
+                spellcheck="false"
+              />
+              <span class="hint"
+                >Next number: <b class="num">{{ preview(row.type, row.counter) }}</b></span
+              >
+              @if (form.controls[row.type].touched && form.controls[row.type].invalid) {
+                <span class="hint warn">Enter a prefix of up to 10 characters.</span>
+              }
+              @for (message of errorsFor(row.type); track $index) {
+                <span class="hint warn">{{ message }}</span>
+              }
+            </div>
+          }
+        </div>
+        @for (message of formErrors(); track $index) {
+          <p class="form-error" role="alert">{{ message }}</p>
+        }
+      </div>
+      <div class="form-foot" *hasScope="'company.edit'">
+        <button class="btn" type="submit" [disabled]="busy()">
+          {{ busy() ? 'Saving…' : 'Save changes' }}
+        </button>
+        <button class="btn ghost" type="button" (click)="cancel()">Cancel</button>
+        @if (saved()) {
+          <span class="saved" role="status">Saved.</span>
+        }
+      </div>
+    </form>
+  } @else {
+    <p class="loading">Loading…</p>
+  }
+</div>

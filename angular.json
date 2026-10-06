@@ -30,6 +30,13 @@
               }
             ],
             "styles": [
+              "node_modules/@fontsource/ibm-plex-sans/latin-400.css",
+              "node_modules/@fontsource/ibm-plex-sans/latin-500.css",
+              "node_modules/@fontsource/ibm-plex-sans/latin-600.css",
+              "node_modules/@fontsource/ibm-plex-sans/latin-700.css",
+              "node_modules/@fontsource/noto-sans-khmer/khmer-400.css",
+              "node_modules/@fontsource/noto-sans-khmer/khmer-600.css",
+              "node_modules/@angular/cdk/overlay-prebuilt.css",
               "src/styles.scss"
             ]
           },

@@ -1,0 +1,76 @@
+<!-- v1.0.0 -->
+<form [formGroup]="form" (ngSubmit)="save()" novalidate>
+  <div class="modal-head">
+    <h3 id="rate-title">
+      @if (data.rate; as rate) {
+        Change the rate from {{ rate.effective_date | date: 'd MMM y' }}
+      } @else {
+        Set a new rate
+      }
+    </h3>
+    <div class="spacer"></div>
+    <button type="button" class="modal-x" aria-label="Close" (click)="ref.close()">&times;</button>
+  </div>
+  <div class="form">
+    <div class="form-grid">
+      <div class="field">
+        <label for="rate-from">From currency</label>
+        <input id="rate-from" type="text" value="USD" readonly />
+        <span class="hint">Always the base currency.</span>
+      </div>
+      <div class="field">
+        <label for="rate-to">To currency</label>
+        <input id="rate-to" type="text" value="KHR" readonly />
+        <span class="hint">Riel — the only other currency the shop takes.</span>
+      </div>
+      <div class="field">
+        <label for="rate-date">Effective from</label>
+        <input id="rate-date" type="date" formControlName="effective_date" cdkFocusInitial />
+        <span class="hint">Applies until the next rate replaces it.</span>
+        @if (form.controls.effective_date.touched && form.controls.effective_date.invalid) {
+          <span class="hint warn">Choose the day it starts.</span>
+        }
+        @for (message of errorsFor('effective_date'); track $index) {
+          <span class="hint warn">{{ message }}</span>
+        }
+      </div>
+      <div class="field">
+        <label for="rate-value">Rate</label>
+        <input
+          id="rate-value"
+          type="text"
+          inputmode="decimal"
+          formControlName="rate"
+          placeholder="4100"
+        />
+        <span class="hint">Riel per one US dollar.</span>
+        @if (form.controls.rate.touched && form.controls.rate.invalid) {
+          <span class="hint warn">A number above zero, up to six decimals — no commas.</span>
+        }
+        @for (message of errorsFor('rate'); track $index) {
+          <span class="hint warn">{{ message }}</span>
+        }
+      </div>
+      <div class="field wide">
+        <label for="rate-note">Note</label>
+        <textarea
+          id="rate-note"
+          formControlName="note"
+          placeholder="Why the rate changed — optional"
+        ></textarea>
+        @for (message of errorsFor('note'); track $index) {
+          <span class="hint warn">{{ message }}</span>
+        }
+      </div>
+    </div>
+    @for (message of formErrors(); track $index) {
+      <p class="form-error" role="alert">{{ message }}</p>
+    }
+  </div>
+  <div class="form-foot">
+    <button class="btn" type="submit" [disabled]="busy()">
+      {{ busy() ? 'Saving…' : 'Save rate' }}
+    </button>
+    <button class="btn ghost" type="button" (click)="ref.close()">Cancel</button>
+  </div>
+</form>

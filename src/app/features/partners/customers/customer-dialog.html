@@ -1,0 +1,206 @@
+<!-- v1.0.0 -->
+<form [formGroup]="form" (ngSubmit)="save()" novalidate>
+  <div class="modal-head">
+    <h3 id="customer-title">{{ customer ? 'Edit ' + customer.name : 'Add customer' }}</h3>
+    <div class="spacer"></div>
+    <button type="button" class="modal-x" aria-label="Close" (click)="ref.close()">&times;</button>
+  </div>
+  <div class="form">
+    <div class="form-grid">
+      <div class="form-sec">Core</div>
+      <div class="field">
+        <label for="c-code">Code</label>
+        <input id="c-code" type="text" formControlName="code" placeholder="CUS-000007" />
+        <span class="hint">Leave blank to let the system number it.</span>
+        @for (message of errorsFor('code'); track $index) {
+          <span class="hint warn">{{ message }}</span>
+        }
+      </div>
+      <div class="field">
+        <label for="c-tier">Price</label>
+        <select id="c-tier" formControlName="price_tier">
+          @for (tier of tiers; track tier.value) {
+            <option [value]="tier.value">{{ tier.label }}</option>
+          }
+        </select>
+        <span class="hint">Loaded automatically at checkout.</span>
+        @for (message of errorsFor('price_tier'); track $index) {
+          <span class="hint warn">{{ message }}</span>
+        }
+      </div>
+      <div class="field wide">
+        <label for="c-name">Name</label>
+        <input
+          id="c-name"
+          type="text"
+          formControlName="name"
+          placeholder="Sok Shop"
+          cdkFocusInitial
+        />
+        @if (invalid('name')) {
+          <span class="hint warn">Enter a name of up to 150 characters.</span>
+        }
+        @for (message of errorsFor('name'); track $index) {
+          <span class="hint warn">{{ message }}</span>
+        }
+      </div>
+      <div class="field">
+        <label for="c-kh">Name in Khmer</label>
+        <input id="c-kh" type="text" formControlName="name_kh" lang="km" />
+      </div>
+      <div class="field">
+        <label for="c-short">Short name</label>
+        <input id="c-short" type="text" formControlName="short_name" />
+        <span class="hint">Used in dropdowns and reports.</span>
+      </div>
+      <div class="field">
+        <label for="c-order">Display order</label>
+        <input id="c-order" type="number" formControlName="display_order" />
+      </div>
+      <div class="field">
+        <label class="check" style="margin-top: 22px">
+          <input type="checkbox" formControlName="is_active" />
+          <span>Active</span>
+        </label>
+        @for (message of errorsFor('is_active'); track $index) {
+          <span class="hint warn">{{ message }}</span>
+        }
+      </div>
+
+      <div class="form-sec gap">Contact</div>
+      <div class="field">
+        <label for="c-contact">Contact person</label>
+        <input id="c-contact" type="text" formControlName="contact_person" />
+      </div>
+      <div class="field">
+        <label for="c-position">Position</label>
+        <input id="c-position" type="text" formControlName="position" />
+      </div>
+      <div class="field">
+        <label for="c-phone">Phone</label>
+        <input id="c-phone" type="text" inputmode="tel" formControlName="phone" />
+      </div>
+      <div class="field">
+        <label for="c-phone2">Second phone</label>
+        <input id="c-phone2" type="text" inputmode="tel" formControlName="phone_alt" />
+      </div>
+      <div class="field">
+        <label for="c-telegram">Telegram</label>
+        <input id="c-telegram" type="text" formControlName="telegram" placeholder="@username" />
+      </div>
+      <div class="field">
+        <label for="c-email">Email</label>
+        <input id="c-email" type="text" inputmode="email" formControlName="email" />
+        @if (invalid('email')) {
+          <span class="hint warn">Enter an email address, or leave it empty.</span>
+        }
+        @for (message of errorsFor('email'); track $index) {
+          <span class="hint warn">{{ message }}</span>
+        }
+      </div>
+
+      <div class="form-sec gap">Address</div>
+      <div class="field wide">
+        <label for="c-address">Address</label>
+        <input id="c-address" type="text" formControlName="address" />
+      </div>
+      <div class="field">
+        <label for="c-district">District / Khan</label>
+        <input id="c-district" type="text" formControlName="district" />
+      </div>
+      <div class="field">
+        <label for="c-province">Province</label>
+        <input id="c-province" type="text" formControlName="province" />
+      </div>
+      <div class="field">
+        <label for="c-country">Country</label>
+        <input id="c-country" type="text" formControlName="country" />
+      </div>
+
+      <div class="form-sec gap">Credit</div>
+      @if (account.hasValue()) {
+        @let owed = account.value();
+        <div class="field wide">
+          <p class="note owed" role="status">
+            @if (owed.balance === '0.00') {
+              Owes nothing at the moment.
+            } @else {
+              Owes <b>{{ owed.balance | usd }}</b>
+              @if (owed.credit_status !== 'NO') {
+                of {{ owed.credit_limit | usd }} · {{ owed.room_left | usd }} room left
+              }
+              · {{ owed.open_invoices.length }} open
+              {{ owed.open_invoices.length === 1 ? 'invoice' : 'invoices' }}
+            }
+          </p>
+        </div>
+      }
+      <div class="field wide">
+        <label class="check">
+          <input type="checkbox" formControlName="allow_credit" />
+          <span>May buy on credit</span>
+        </label>
+        <span class="hint">Off means every sale must be settled at the till.</span>
+        @for (message of errorsFor('allow_credit'); track $index) {
+          <span class="hint warn">{{ message }}</span>
+        }
+      </div>
+      <div class="field">
+        <label for="c-limit">Credit limit</label>
+        <input id="c-limit" type="text" inputmode="decimal" formControlName="credit_limit" />
+        <span class="hint">In US dollars. Absolute — no one can sell past it.</span>
+        @if (invalid('credit_limit')) {
+          <span class="hint warn">An amount in dollars and cents, no commas.</span>
+        }
+        @for (message of errorsFor('credit_limit'); track $index) {
+          <span class="hint warn">{{ message }}</span>
+        }
+      </div>
+      <div class="field">
+        <label for="c-terms">Payment terms</label>
+        <input id="c-terms" type="number" min="0" formControlName="payment_terms_days" />
+        <span class="hint">Days. Sets the due date on each credit sale.</span>
+        @if (invalid('payment_terms_days')) {
+          <span class="hint warn">Whole days, zero or more.</span>
+        }
+        @for (message of errorsFor('payment_terms_days'); track $index) {
+          <span class="hint warn">{{ message }}</span>
+        }
+      </div>
+      <div class="field wide">
+        <label class="check">
+          <input type="checkbox" formControlName="credit_hold" />
+          <span>On credit hold</span>
+        </label>
+        <span class="hint warn">
+          Blocks new credit sales without changing their limit. Existing invoices are unaffected.
+        </span>
+      </div>
+
+      <div class="form-sec gap">Notes</div>
+      <div class="field wide">
+        <label for="c-notes">Notes</label>
+        <textarea
+          id="c-notes"
+          formControlName="notes"
+          placeholder="Collection day, who to call, anything the seller should know"
+        ></textarea>
+      </div>
+    </div>
+    @for (message of formErrors(); track $index) {
+      <p class="form-error" role="alert">{{ message }}</p>
+    }
+  </div>
+  <div class="form-foot">
+    <button class="btn" type="submit" [disabled]="busy()">
+      {{ busy() ? 'Saving…' : 'Save customer' }}
+    </button>
+    <button class="btn ghost" type="button" (click)="ref.close()">Cancel</button>
+    @if (customer && customer.is_active !== false) {
+      <div class="spacer"></div>
+      <button class="btn danger" type="button" [disabled]="busy()" (click)="deactivate()">
+        Deactivate
+      </button>
+    }
+  </div>
+</form>

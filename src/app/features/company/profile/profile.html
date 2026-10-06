@@ -1,0 +1,150 @@
+<!-- v1.0.0 -->
+<div class="page">
+  <p class="page-intro">
+    One shop, one record. These values appear on every printed receipt and invoice.
+  </p>
+
+  @if (profile.error(); as error) {
+    <app-load-error [error]="error" (retry)="profile.reload()" />
+  } @else if (current(); as saved) {
+    <div class="grid2">
+      <form class="panel" [formGroup]="shop" (ngSubmit)="saveShop()" novalidate>
+        <div class="panel-head"><h3>Shop details</h3></div>
+        <div class="form">
+          <div class="form-grid">
+            <div class="field wide">
+              <label for="f-shopname">Shop name</label>
+              <input id="f-shopname" type="text" formControlName="name" />
+              @if (shop.controls.name.touched && shop.controls.name.hasError('required')) {
+                <span class="hint warn">Enter the shop name.</span>
+              }
+              @for (message of errorsFor('shop', 'name'); track $index) {
+                <span class="hint warn">{{ message }}</span>
+              }
+            </div>
+            <div class="field wide">
+              <label for="f-shopkh">Name in Khmer</label>
+              <input id="f-shopkh" type="text" formControlName="name_kh" />
+              <span class="hint">Printed above the English name on Khmer receipts.</span>
+              @for (message of errorsFor('shop', 'name_kh'); track $index) {
+                <span class="hint warn">{{ message }}</span>
+              }
+            </div>
+            <div class="field wide">
+              <label for="f-addr">Address</label>
+              <input id="f-addr" type="text" formControlName="address" />
+              @for (message of errorsFor('shop', 'address'); track $index) {
+                <span class="hint warn">{{ message }}</span>
+              }
+            </div>
+            <div class="field">
+              <label for="f-phone">Phone</label>
+              <input id="f-phone" type="text" formControlName="phone" />
+              @for (message of errorsFor('shop', 'phone'); track $index) {
+                <span class="hint warn">{{ message }}</span>
+              }
+            </div>
+            <div class="field">
+              <label for="f-tin">VAT / TIN</label>
+              <input id="f-tin" type="text" formControlName="vat_tin" />
+              @for (message of errorsFor('shop', 'vat_tin'); track $index) {
+                <span class="hint warn">{{ message }}</span>
+              }
+            </div>
+            <div class="field wide">
+              <label for="f-logo">Logo</label>
+              <app-image-field
+                inputId="f-logo"
+                [current]="saved.logo"
+                [choice]="logo()"
+                (choiceChange)="pickLogo($event)"
+              />
+              <span class="hint">PNG, at least 300 px wide for clear printing.</span>
+              @for (message of errorsFor('shop', 'logo'); track $index) {
+                <span class="hint warn">{{ message }}</span>
+              }
+            </div>
+          </div>
+          @for (message of state.shop().form; track $index) {
+            <p class="form-error" role="alert">{{ message }}</p>
+          }
+        </div>
+        <div class="form-foot" *hasScope="'company.edit'">
+          <button class="btn" type="submit" [disabled]="state.shop().busy">
+            {{ state.shop().busy ? 'Saving…' : 'Save changes' }}
+          </button>
+          <button class="btn ghost" type="button" (click)="cancelShop()">Cancel</button>
+          @if (state.shop().saved) {
+            <span class="saved" role="status">Saved.</span>
+          }
+        </div>
+      </form>
+
+      <form class="panel" [formGroup]="receipt" (ngSubmit)="saveReceipt()" novalidate>
+        <div class="panel-head"><h3>Receipt</h3></div>
+        <div class="form">
+          <div class="form-grid">
+            <div class="field wide">
+              <label for="f-rhead">Header line</label>
+              <input id="f-rhead" type="text" formControlName="receipt_header" />
+              @for (message of errorsFor('receipt', 'receipt_header'); track $index) {
+                <span class="hint warn">{{ message }}</span>
+              }
+            </div>
+            <div class="field wide">
+              <label for="f-rfoot">Footer line</label>
+              <textarea id="f-rfoot" formControlName="receipt_footer"></textarea>
+              @for (message of errorsFor('receipt', 'receipt_footer'); track $index) {
+                <span class="hint warn">{{ message }}</span>
+              }
+            </div>
+            <div class="field">
+              <label for="f-paper">Paper width</label>
+              <select id="f-paper" formControlName="receipt_paper_width">
+                @for (option of paperWidths; track option.value) {
+                  <option [value]="option.value">{{ option.label }}</option>
+                }
+              </select>
+            </div>
+            <div class="field">
+              <label for="f-lang">Receipt language</label>
+              <select id="f-lang" formControlName="receipt_language">
+                @for (option of languages; track option.value) {
+                  <option [value]="option.value">{{ option.label }}</option>
+                }
+              </select>
+            </div>
+            <div class="field wide">
+              <label class="check">
+                <input type="checkbox" formControlName="receipt_show_riel_total" />
+                <span>Show the riel total</span>
+              </label>
+              <label class="check">
+                <input type="checkbox" formControlName="receipt_show_rate_used" />
+                <span>Show the exchange rate used</span>
+              </label>
+              <label class="check">
+                <input type="checkbox" formControlName="receipt_show_seller" />
+                <span>Show the seller's name</span>
+              </label>
+            </div>
+          </div>
+          @for (message of state.receipt().form; track $index) {
+            <p class="form-error" role="alert">{{ message }}</p>
+          }
+        </div>
+        <div class="form-foot" *hasScope="'company.edit'">
+          <button class="btn" type="submit" [disabled]="state.receipt().busy">
+            {{ state.receipt().busy ? 'Saving…' : 'Save changes' }}
+          </button>
+          <button class="btn ghost" type="button" (click)="cancelReceipt()">Cancel</button>
+          @if (state.receipt().saved) {
+            <span class="saved" role="status">Saved.</span>
+          }
+        </div>
+      </form>
+    </div>
+  } @else {
+    <p class="loading">Loading…</p>
+  }
+</div>

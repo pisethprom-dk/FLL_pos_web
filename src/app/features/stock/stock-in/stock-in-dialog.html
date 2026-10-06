@@ -1,0 +1,283 @@
+<!-- v1.0.0 -->
+@let d = doc();
+<div class="modal-head">
+  <h3 id="grn-title">{{ d ? 'Stock in ' + d.number : 'New stock in' }}</h3>
+  <div class="spacer"></div>
+  <button type="button" class="modal-x" aria-label="Close" (click)="close()">&times;</button>
+</div>
+<div class="form" [formGroup]="form">
+  @if (d?.reverses_number) {
+    <div class="note" style="margin-bottom: 16px">
+      This reverses {{ d!.reverses_number }}: the goods it received went back out of stock at the
+      cost they came in at.
+    </div>
+  } @else if (d?.status === 'POSTED') {
+    <div class="note" style="margin-bottom: 16px">
+      Posted {{ d!.posted_at | date: 'd MMM y, HH:mm' }} by {{ d!.posted_by_name ?? '—' }}.
+      @if (d!.reversed_by_number) {
+        Reversed by {{ d!.reversed_by_number }}.
+      } @else {
+        A posted stock-in is frozen; a mistake is put right by reversing it.
+      }
+    </div>
+  } @else {
+    <div class="note" style="margin-bottom: 16px">
+      Draft — nothing has entered stock yet. Posting writes the movements and updates average cost.
+    </div>
+  }
+  <div class="form-grid">
+    <div class="field">
+      <label for="grn-supplier">Supplier</label>
+      <select id="grn-supplier" formControlName="supplier" cdkFocusInitial>
+        <option [ngValue]="null" disabled>Choose a supplier…</option>
+        @for (s of supplierOptions(); track s.id) {
+          <option [ngValue]="s.id">{{ s.name }}</option>
+        }
+      </select>
+      @if (invalid('supplier')) {
+        <span class="hint warn">Choose who the goods came from.</span>
+      }
+      @for (message of errorsFor('supplier'); track $index) {
+        <span class="hint warn">{{ message }}</span>
+      }
+    </div>
+    <div class="field">
+      <label for="grn-date">Date received</label>
+      <input id="grn-date" type="date" formControlName="doc_date" [max]="today" />
+      @if (invalid('doc_date')) {
+        <span class="hint warn">A date, today or earlier.</span>
+      }
+      @for (message of errorsFor('doc_date'); track $index) {
+        <span class="hint warn">{{ message }}</span>
+      }
+    </div>
+    <div class="field">
+      <label for="grn-ref">Their reference</label>
+      <input id="grn-ref" type="text" formControlName="supplier_ref" placeholder="TT-88204" />
+      <span class="hint">The supplier's invoice or delivery note number.</span>
+      @for (message of errorsFor('supplier_ref'); track $index) {
+        <span class="hint warn">{{ message }}</span>
+      }
+    </div>
+    <div class="field">
+      <label for="grn-number">Number</label>
+      <input id="grn-number" type="text" [value]="d?.number ?? 'Given on first save'" readonly />
+    </div>
+    <div class="field wide">
+      <label for="grn-note">Note</label>
+      <textarea id="grn-note" formControlName="note" rows="2"></textarea>
+    </div>
+  </div>
+</div>
+
+@if (editable()) {
+  <app-product-picker
+    [disabled]="pickerHint() !== ''"
+    [hint]="pickerHint()"
+    (picked)="add($event)"
+  />
+  <div class="lines-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Product</th>
+          <th>Bought as</th>
+          <th class="r">Qty</th>
+          <th class="r">Per pack</th>
+          <th class="r">Cost each pack</th>
+          <th class="r">Into stock</th>
+          <th class="r">Unit cost</th>
+          <th class="r">Line total</th>
+          <th style="width: 34px"></th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (row of rows(); track row.key) {
+          @let p = preview(row);
+          <tr [formGroup]="row.form">
+            <td>
+              {{ row.name }}
+              <span class="cell-sub num">{{ row.code }}</span>
+            </td>
+            <td>
+              <select
+                class="till-input text"
+                formControlName="pack_unit"
+                [attr.aria-label]="'Bought as, ' + row.code"
+              >
+                <option [ngValue]="null">{{ row.unit }}</option>
+                @for (u of packUnits(row); track u.id) {
+                  <option [ngValue]="u.id">{{ u.name }}</option>
+                }
+              </select>
+            </td>
+            <td class="r">
+              <input
+                class="till-input w-qty"
+                [id]="'packs-' + row.key"
+                type="text"
+                inputmode="decimal"
+                formControlName="packs"
+                [class.bad]="bad(row.form.controls.packs)"
+                [attr.aria-label]="'Quantity, ' + row.code"
+              />
+            </td>
+            <td class="r">
+              <input
+                class="till-input w-qty"
+                type="text"
+                inputmode="decimal"
+                formControlName="pack_size"
+                [class.locked]="row.form.controls.pack_size.disabled"
+                [class.bad]="bad(row.form.controls.pack_size)"
+                [attr.aria-label]="'Per pack, ' + row.code"
+              />
+            </td>
+            <td class="r">
+              <input
+                class="till-input w-cost"
+                type="text"
+                inputmode="decimal"
+                formControlName="pack_cost"
+                [class.bad]="bad(row.form.controls.pack_cost)"
+                [attr.aria-label]="'Cost each pack, ' + row.code"
+              />
+            </td>
+            <td class="r num nowrap">
+              {{ p.into | qty }}
+              @if (p.into) {
+                <span class="muted">{{ row.unit }}</span>
+              }
+            </td>
+            <td class="r num">{{ p.unitCost | usd: 4 }}</td>
+            <td class="r num">{{ p.total | usd }}</td>
+            <td class="r">
+              <button
+                type="button"
+                class="rowlink"
+                title="Remove"
+                [attr.aria-label]="'Remove ' + row.code"
+                (click)="remove(row)"
+              >
+                &times;
+              </button>
+            </td>
+          </tr>
+        } @empty {
+          <tr>
+            <td colspan="9" class="muted">
+              No lines yet. Scan or type a code above, choose a product, or import a list.
+            </td>
+          </tr>
+        }
+      </tbody>
+      @if (rows().length > 0) {
+        @let t = totals();
+        <tfoot>
+          <tr>
+            <td colspan="5">{{ rows().length }} {{ rows().length === 1 ? 'line' : 'lines' }}</td>
+            <td class="r num">{{ t.units | qty }}</td>
+            <td></td>
+            <td class="r num">{{ t.total | usd }}</td>
+            <td></td>
+          </tr>
+        </tfoot>
+      }
+    </table>
+  </div>
+} @else {
+  <div class="lines-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Product</th>
+          <th>Bought as</th>
+          <th class="r">Qty</th>
+          <th class="r">Per pack</th>
+          <th class="r">Cost each pack</th>
+          <th class="r">Into stock</th>
+          <th class="r">Unit cost</th>
+          <th class="r">Line total</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (line of d?.lines ?? []; track line.id) {
+          <tr>
+            <td>
+              {{ line.product_name }}
+              <span class="cell-sub num">{{ line.product_code }}</span>
+            </td>
+            <td>{{ line.pack_unit_name ?? line.unit_name }}</td>
+            <td class="r num">{{ line.packs | qty }}</td>
+            <td class="r num">{{ line.pack_size ?? '1' | qty }}</td>
+            <td class="r num">{{ line.pack_cost | usd: costPlaces(line.pack_cost) }}</td>
+            <td class="r num nowrap">
+              {{ line.quantity | qty }} <span class="muted">{{ line.unit_name }}</span>
+            </td>
+            <td class="r num">{{ line.unit_cost | usd: 4 }}</td>
+            <td class="r num">{{ line.line_total | usd }}</td>
+          </tr>
+        }
+      </tbody>
+      <tfoot>
+        <tr>
+          <td colspan="7">
+            {{ d?.lines?.length ?? 0 }} {{ d?.lines?.length === 1 ? 'line' : 'lines' }}
+          </td>
+          <td class="r num">{{ d?.total | usd }}</td>
+        </tr>
+      </tfoot>
+    </table>
+  </div>
+}
+
+<div class="form">
+  @for (message of errorsFor('lines'); track $index) {
+    <p class="form-error" role="alert">{{ message }}</p>
+  }
+  @if (editable()) {
+    <div class="form-grid one">
+      <div class="field">
+        <span class="hint">
+          Pack size is saved on the line, so a supplier changing their carton later does not alter
+          this document. Unit cost is held to four decimals — $26.40 over 24 is $1.1000. The figures
+          are worked out as you type; once saved, they are the server's.
+        </span>
+      </div>
+    </div>
+  }
+  @for (message of formErrors(); track $index) {
+    <p class="form-error" role="alert">{{ message }}</p>
+  }
+  @for (message of otherErrors(); track $index) {
+    <p class="form-error" role="alert">{{ message }}</p>
+  }
+</div>
+<div class="form-foot">
+  @if (editable()) {
+    <button class="btn" type="button" [disabled]="busy()" (click)="post()">Post to stock</button>
+    <button class="btn ghost" type="button" [disabled]="busy()" (click)="saveDraft()">
+      Save draft
+    </button>
+    <button class="btn ghost" type="button" [disabled]="busy()" (click)="importList()">
+      Import a list…
+    </button>
+    @if (busy()) {
+      <span class="muted" role="status">Working…</span>
+    }
+    @if (d) {
+      <div class="spacer"></div>
+      <button class="btn danger" type="button" [disabled]="busy()" (click)="deleteDraft()">
+        Delete draft
+      </button>
+    }
+  } @else {
+    <button class="btn ghost" type="button" (click)="close()">Close</button>
+    @if (reversible()) {
+      <div class="spacer"></div>
+      <button class="btn danger" type="button" [disabled]="busy()" (click)="reverse()">
+        Reverse…
+      </button>
+    }
+  }
+</div>

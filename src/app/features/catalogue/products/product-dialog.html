@@ -1,0 +1,272 @@
+<!-- v1.0.0 -->
+<form [formGroup]="form" (ngSubmit)="save()" novalidate>
+  <div class="modal-head">
+    <h3 id="product-title">{{ product ? 'Edit ' + product.name : 'Add product' }}</h3>
+    <div class="spacer"></div>
+    <button type="button" class="modal-x" aria-label="Close" (click)="ref.close()">&times;</button>
+  </div>
+  <div class="form">
+    <div class="form-grid">
+      <div class="form-sec">Identity</div>
+      <div class="field">
+        <label for="p-code">Code / SKU</label>
+        <input
+          id="p-code"
+          type="text"
+          formControlName="code"
+          placeholder="TL-0102"
+          cdkFocusInitial
+        />
+        @if (invalid('code')) {
+          <span class="hint warn">Enter a code of up to 30 characters.</span>
+        }
+        @for (message of errorsFor('code'); track $index) {
+          <span class="hint warn">{{ message }}</span>
+        }
+      </div>
+      <div class="field">
+        <label for="p-barcode">Barcode</label>
+        <input id="p-barcode" type="text" formControlName="barcode" />
+        <span class="hint">Leave empty if the product has none.</span>
+        @for (message of errorsFor('barcode'); track $index) {
+          <span class="hint warn">{{ message }}</span>
+        }
+      </div>
+      <div class="field wide">
+        <label for="p-name">Name</label>
+        <input
+          id="p-name"
+          type="text"
+          formControlName="name"
+          placeholder="Impact drill 13mm 710W"
+        />
+        @if (invalid('name')) {
+          <span class="hint warn">Enter a name of up to 200 characters.</span>
+        }
+        @for (message of errorsFor('name'); track $index) {
+          <span class="hint warn">{{ message }}</span>
+        }
+      </div>
+      <div class="field">
+        <label for="p-kh">Name in Khmer</label>
+        <input id="p-kh" type="text" formControlName="name_kh" lang="km" />
+        @for (message of errorsFor('name_kh'); track $index) {
+          <span class="hint warn">{{ message }}</span>
+        }
+      </div>
+      <div class="field">
+        <label for="p-short">Short name</label>
+        <input id="p-short" type="text" formControlName="short_name" />
+        <span class="hint">Must fit one receipt line. Left empty, the name is used.</span>
+        @for (message of errorsFor('short_name'); track $index) {
+          <span class="hint warn">{{ message }}</span>
+        }
+      </div>
+      <div class="field">
+        <label for="p-category">Category</label>
+        <select id="p-category" formControlName="category">
+          <option [ngValue]="null" disabled>Choose a category…</option>
+          @for (option of categoryOptions; track option.id) {
+            <option [ngValue]="option.id">{{ option.label }}</option>
+          }
+        </select>
+        @if (invalid('category')) {
+          <span class="hint warn">Choose a category.</span>
+        }
+        @for (message of errorsFor('category'); track $index) {
+          <span class="hint warn">{{ message }}</span>
+        }
+      </div>
+      <div class="field">
+        <label for="p-brand">Brand</label>
+        <select id="p-brand" formControlName="brand">
+          <option [ngValue]="null">— No brand —</option>
+          @for (brand of brandOptions; track brand.id) {
+            <option [ngValue]="brand.id">{{ brand.name }}</option>
+          }
+        </select>
+        @for (message of errorsFor('brand'); track $index) {
+          <span class="hint warn">{{ message }}</span>
+        }
+      </div>
+      <div class="field">
+        <label for="p-model">Model number</label>
+        <input id="p-model" type="text" formControlName="model_no" placeholder="GSB 550" />
+        <span class="hint">The manufacturer's own code.</span>
+        @for (message of errorsFor('model_no'); track $index) {
+          <span class="hint warn">{{ message }}</span>
+        }
+      </div>
+      <div class="field">
+        <label for="p-image">Image</label>
+        <app-image-field
+          inputId="p-image"
+          [current]="product?.image"
+          [choice]="image()"
+          (choiceChange)="pickImage($event)"
+        />
+        @for (message of errorsFor('image'); track $index) {
+          <span class="hint warn">{{ message }}</span>
+        }
+      </div>
+      <div class="field wide">
+        <label for="p-desc">Description</label>
+        <textarea id="p-desc" formControlName="description"></textarea>
+      </div>
+
+      <div class="form-sec gap">Selling</div>
+      <div class="field">
+        <label for="p-unit">Unit</label>
+        <select id="p-unit" formControlName="unit">
+          @for (unit of unitOptions; track unit.id) {
+            <option [ngValue]="unit.id">{{ unit.name }}</option>
+          }
+        </select>
+        @if (invalid('unit')) {
+          <span class="hint warn">Choose a unit.</span>
+        }
+        @for (message of errorsFor('unit'); track $index) {
+          <span class="hint warn">{{ message }}</span>
+        }
+      </div>
+      <div class="field">
+        <label class="check" style="margin-top: 22px">
+          <input type="checkbox" formControlName="is_price_fixed" />
+          <span>Price is fixed — no discounting</span>
+        </label>
+      </div>
+      <div class="field">
+        <label for="p-retail">Retail price</label>
+        <input id="p-retail" type="text" inputmode="decimal" formControlName="retail_price" />
+        <span class="hint">US dollars, e.g. 78.00.</span>
+        @if (invalid('retail_price')) {
+          <span class="hint warn">A price in dollars and cents, no commas.</span>
+        }
+        @for (message of errorsFor('retail_price'); track $index) {
+          <span class="hint warn">{{ message }}</span>
+        }
+      </div>
+      <div class="field">
+        <label for="p-wholesale">Wholesale price</label>
+        <input id="p-wholesale" type="text" inputmode="decimal" formControlName="wholesale_price" />
+        <span class="hint">US dollars, for store customers on wholesale.</span>
+        @if (invalid('wholesale_price')) {
+          <span class="hint warn">A price in dollars and cents, no commas.</span>
+        }
+        @for (message of errorsFor('wholesale_price'); track $index) {
+          <span class="hint warn">{{ message }}</span>
+        }
+      </div>
+
+      <div class="form-sec gap">Stock</div>
+      <div class="field wide">
+        <label class="check">
+          <input type="checkbox" formControlName="track_stock" />
+          <span>Track stock for this product</span>
+        </label>
+        <span class="hint">Turn off for services and labour, which have no quantity.</span>
+        @for (message of errorsFor('track_stock'); track $index) {
+          <span class="hint warn">{{ message }}</span>
+        }
+      </div>
+      @if (product) {
+        <div class="field">
+          <label for="p-onhand">On hand</label>
+          <input
+            id="p-onhand"
+            type="text"
+            [value]="(product.qty_on_hand | qty) + ' ' + product.unit_name"
+            readonly
+          />
+          <span class="hint">Changed by stock-in, sales and adjustments only.</span>
+        </div>
+        @if (data.canSeeCost) {
+          <div class="field">
+            <label for="p-avgcost">Average cost</label>
+            <input id="p-avgcost" type="text" [value]="product.avg_cost | usd" readonly />
+            <span class="hint warn"
+              >Worked out from purchases. Correct it with a stock adjustment, never here.</span
+            >
+          </div>
+        }
+      }
+      <div class="field">
+        <label for="p-reorder">Reorder level</label>
+        <input id="p-reorder" type="text" inputmode="decimal" formControlName="reorder_level" />
+        <span class="hint">Flagged when on hand reaches this.</span>
+        @if (invalid('reorder_level')) {
+          <span class="hint warn">A quantity, up to two decimals.</span>
+        }
+        @for (message of errorsFor('reorder_level'); track $index) {
+          <span class="hint warn">{{ message }}</span>
+        }
+      </div>
+      <div class="field">
+        <label for="p-reorderqty">Reorder quantity</label>
+        <input id="p-reorderqty" type="text" inputmode="decimal" formControlName="reorder_qty" />
+        <span class="hint">How many to buy when it trips.</span>
+        @if (invalid('reorder_qty')) {
+          <span class="hint warn">A quantity, up to two decimals.</span>
+        }
+        @for (message of errorsFor('reorder_qty'); track $index) {
+          <span class="hint warn">{{ message }}</span>
+        }
+      </div>
+      <div class="field">
+        <label for="p-shelf">Shelf location</label>
+        <input id="p-shelf" type="text" formControlName="shelf_location" placeholder="A3-2" />
+        <span class="hint">Where it sits in the shop. Count sheets sort by it.</span>
+        @for (message of errorsFor('shelf_location'); track $index) {
+          <span class="hint warn">{{ message }}</span>
+        }
+      </div>
+
+      <div class="form-sec gap">Tool details</div>
+      <div class="field">
+        <label for="p-warranty">Warranty</label>
+        <input id="p-warranty" type="number" min="0" formControlName="warranty_months" />
+        <span class="hint">Months. Zero means none — printed on the receipt.</span>
+        @if (invalid('warranty_months')) {
+          <span class="hint warn">Whole months, zero or more.</span>
+        }
+        @for (message of errorsFor('warranty_months'); track $index) {
+          <span class="hint warn">{{ message }}</span>
+        }
+      </div>
+      <div class="field">
+        <label for="p-origin">Country of origin</label>
+        <input id="p-origin" type="text" formControlName="origin_country" />
+        @for (message of errorsFor('origin_country'); track $index) {
+          <span class="hint warn">{{ message }}</span>
+        }
+      </div>
+
+      <div class="form-sec gap">Other</div>
+      <div class="field wide">
+        <label for="p-notes">Notes</label>
+        <textarea id="p-notes" formControlName="notes"></textarea>
+      </div>
+      <div class="field wide">
+        <label class="check">
+          <input type="checkbox" formControlName="is_active" />
+          <span>Active — can be sold</span>
+        </label>
+      </div>
+    </div>
+    @for (message of formErrors(); track $index) {
+      <p class="form-error" role="alert">{{ message }}</p>
+    }
+  </div>
+  <div class="form-foot">
+    <button class="btn" type="submit" [disabled]="busy()">
+      {{ busy() ? 'Saving…' : 'Save product' }}
+    </button>
+    <button class="btn ghost" type="button" (click)="ref.close()">Cancel</button>
+    @if (product && product.is_active !== false) {
+      <div class="spacer"></div>
+      <button class="btn danger" type="button" [disabled]="busy()" (click)="deactivate()">
+        Deactivate
+      </button>
+    }
+  </div>
+</form>

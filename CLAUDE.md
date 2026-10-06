@@ -1,4 +1,4 @@
-<!-- v1.0.0 — handover context for Claude Code. Place at the repo root as CLAUDE.md. -->
+<!-- v1.2.0 — handover context for Claude Code. Place at the repo root as CLAUDE.md. -->
 
 # POS frontend — Angular 22
 
@@ -16,6 +16,19 @@ around them.
 **Discuss before coding.** The concept and approach must be agreed before any
 code is generated. This is a firm rule from the project owner, not a
 preference. When a decision is ambiguous, ask — do not pick one and build it.
+
+**Workflow for every task** (owner's rule, 2026-10-06):
+
+1. Think the problem through first: read the code involved, then write the
+   plan in `tasks/todo.md`.
+2. The plan is a checklist of todo items (`- [ ]`).
+3. Check in with the owner before starting work — they verify the plan.
+4. Then work through the todos one by one, ticking each off (`- [x]`) as it
+   is done.
+5. At every step, give a high-level explanation of what changed.
+6. Keep every change simple and minimal. No big rewrites.
+7. At the end, add a **Review** section to `tasks/todo.md` summarising the
+   changes.
 
 **Every hand-written file gets a version comment on line 1**, bumped on every
 change: `// v1.0.0` in TypeScript and SCSS, `<!-- v1.0.0 -->` in HTML. Not in
@@ -95,11 +108,44 @@ Do not re-litigate these without asking.
   tables, keyboard access. No Angular Material, no PrimeNG.
 - **API client**: generated services returning Observables
   (`services: true`, `promises: false` in `ng-openapi-gen.json`).
-- **Auth** (to build): access token in memory only, never in localStorage. An
-  interceptor adds `Bearer`; on a 401 it calls `/api/auth/refresh/` once and
-  retries. On start-up the app calls refresh to restore the session. The
-  scopes from `/api/auth/me/` drive route guards and a `*hasScope` directive —
-  no role names in components.
+- **Auth** (built, step 3): access token in memory only, never in
+  localStorage. An interceptor adds `Bearer`; on a 401 it calls
+  `/api/auth/refresh/` once and retries. On start-up the app calls refresh to
+  restore the session. Login and refresh both return the user with their
+  scopes, which drive route guards and a `*hasScope` directive — no role names
+  in components. Each refresh cookie works once, so concurrent refreshes share
+  one request, and tabs take turns through a Web Lock. Signing out signs out
+  every tab.
+- **Fonts**: IBM Plex Sans and Noto Sans Khmer, bundled from `@fontsource`
+  (listed in `angular.json` styles), not loaded from Google.
+- **Forced password change**: while `must_change_password` is true, the only
+  page is `/change-password`. The backend does not enforce this yet.
+- **Sign-in look** (agreed 2026-10-05, design A "Workbench"): the shop on the
+  sidebar's ink over a pegboard pattern, the form on paper. Login and
+  change-password share it through `core/auth-frame`. The shop's name, Khmer
+  name, address and logo come from the public `/api/company/brand/`, so they
+  show before sign-in; if it fails, the page says "POS back office". English
+  labels only — no Khmer labels on the form (owner's choice). Password fields
+  use `<app-password-field>`: Show/Hide and a Caps Lock warning.
+- **Brand colours** (agreed 2026-10-05, option A "deep teal throughout"),
+  measured from the FLL logo and kept as tokens in `src/styles/_tokens.scss`:
+  sidebar, sign-in panel and dashboard band in deep teal `--side` (#0B3F45);
+  the active menu item in `--brand-yellow` (#FFBE00) with ink text; buttons,
+  links and the focus ring in `--primary`, the brand teal (#00727A). Text stays
+  ink and riel amounts stay `--khr` gold. **Yellow is never text on the light
+  pages** (1.7:1 on white) — only a fill behind dark text, or text on teal. The
+  shop's logo (Company → Profile) shows as a circle on the sign-in panel and at
+  the top of the sidebar.
+- **Stock screens** (agreed 2026-10-05). Which supplier carries which product
+  is its own screen, Partners → Supplier products; the link names its pack
+  ("Carton" of 24 — `pack_unit` added in the backend), and a stock-in line
+  starts with it. Line figures are previewed exactly in the browser
+  (`shared/money/exact.ts`) and replaced by the server's on save. The server
+  totals adjustments and counts (null until posted). A count saves each line
+  as it is entered, because the expected quantity is read at that moment. A
+  new document is created on its first save, so a cancelled dialog leaves no
+  gap in the numbers. Tiles are counts only; the mockup's money tiles wait for
+  the reports API. No Export and no Print count sheet.
 
 ---
 
@@ -113,7 +159,69 @@ src/app/
   features/    one folder per mockup menu, each a lazy-loaded route:
                sell, quotations, payments, returns, warranty, stock,
                reports, catalogue, partners, company, users
+src/styles/    the mockup's CSS, one partial per area; changes from the
+               mockup are commented where they happen
 ```
+
+**Adding a screen.** Its entry in `core/shell/screens.ts` holds the menu
+label, path, title and scopes. Add the route with
+`screenRoute(SCREENS.x, { loadComponent: ... })` in `app.routes.ts` — that
+adds the scope check — and set the entry's `ready: true` so the menu links it
+instead of greying it out.
+
+**Patterns the company screens set** (reuse them):
+
+- A screen loads with `rxResource` and reloads it after a save. **Check
+  `hasValue()` before `value()`** — in Angular 22, `value()` throws while the
+  resource is in error, which turns a failed load into a crash instead of the
+  `<app-load-error>` "Try again".
+- Dialogs open through `shared/dialog/modal.ts` (CDK Dialog in the mockup's
+  modal look); `confirm()` in `confirm-dialog.ts` asks before anything that
+  cannot be undone. A dialog does its own save and closes with the result.
+- Images go through `<app-image-field>`: a new file is sent as multipart
+  (`...$FormData`), a removal as JSON with `null` — the multipart variant drops
+  nulls.
+- Server refusals show under their field, and `clearOnEdit()`
+  (`shared/server-errors.ts`) drops each one when that field is edited.
+- Specs open the real screen with `openScreen()` (`shared/screen-testing.ts`).
+  Resources hold the page "busy" until their calls are answered, so answer
+  first (`answer()`), then `whenStable()` — never the other way round.
+
+**Patterns the catalogue screens added:**
+
+- A dropdown's reference list (categories, brands, units) loads with
+  `fetchAll()` (`shared/fetch-all.ts`), which follows `next` — the API pages
+  at 50 and a list must never silently stop there.
+- A long list pages on the server: `<app-pager>`, and every filter change
+  goes back to page 1. Keep the last page on screen while the next loads
+  (`linkedSignal`, see `products.ts`) — a resource drops its value when its
+  params change.
+- A multipart upload with a nullable link (brand, parent) goes through
+  `forMultipart()` (`shared/multipart.ts`): nulls become empty text, which
+  the server reads as "none". Never for the file field itself.
+- Cost columns and fields show only with `cost.view`; the API sends them as
+  null to anyone else.
+- Records are never deleted: Deactivate (with `confirm()`) sets
+  `is_active: false`; ticking Active brings one back.
+
+**Patterns the stock screens added:**
+
+- A document's lines are picked with `<app-product-picker>`
+  (`shared/product-picker/`): a code or barcode box that adds on Enter, plus
+  brand and category lists. `stockOnly` keeps out products that track no
+  stock. The till and quotations should reuse it.
+- A document dialog opens with `document: true` (1040px — nine line columns do
+  not fit 780) and `guarded: true`: Escape and the veil then go through the
+  dialog's own `close()`, which asks with `confirmDiscard()` before unsaved
+  lines are lost (`shared/dialog/guard-close.ts`).
+- A preview of money is worked out with `times()`, `over()` and `sum()` from
+  `shared/money/exact.ts` — whole digits in BigInt, halves away from zero, as
+  the backend rounds. Never floats, and never the figure that is printed.
+- A document dialog closes with `'saved'` or `{ open: doc }` (a reversal just
+  posted), and the list opens that one next (`DocResult` in
+  `features/stock/stock-common.ts`).
+- A refusal about a document's lines comes back as one entry per line;
+  `readApiErrors()` reads it as "Line 2: …".
 
 ---
 
@@ -123,9 +231,12 @@ src/app/
 |---|---|---|
 | 1 | Backend schema clean (0 warnings, tested) | Done — in the backend |
 | 2 | Scaffold, proxy, generated client | Done |
-| 3 | Core: session, interceptor, guards, `*hasScope`, shell from the mockup, login | **Next** — agree the design first |
-| 4 | Catalogue screens (proves the pipeline end to end) | |
-| 5 | Partners, stock, the till, quotations, payments, returns | |
+| 3 | Core: session, interceptor, guards, `*hasScope`, shell from the mockup, login | Done |
+| 3a | Company: profile, exchange rate, payment notes, rules & numbering (quotation and invoice prefixes only — owner's choice) | Done |
+| 4 | Catalogue: products, categories, brands, units (Units not in the mockup — owner's choice) | Done |
+| 5a | Partners: customers (what each owes shows in their dialog, from the sales account) and suppliers (no tiles) | Done |
+| 5b | Stock: stock in, adjustments, stock count, CSV/Excel import, reversal — and Partners → Supplier products, whose pack fills stock-in lines in | Done — posting and reversing not yet tried against the live backend (needs a database dump first) |
+| 5c | Quotations, the till (Sell), customer payments, returns & voids | **Next** — agree the design first |
 
 **No API yet for:** Dashboard, Daily sales, Stock on hand, Receivables
 (backend slice 6), and Warranty claims (not assigned to a slice).

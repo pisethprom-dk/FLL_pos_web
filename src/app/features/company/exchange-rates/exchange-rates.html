@@ -1,0 +1,109 @@
+<!-- v1.0.0 -->
+<div class="page">
+  <p class="page-intro">
+    One rate per effective date. A sale keeps the rate that was in use on its own date, so old
+    receipts reprint exactly as they were issued.
+  </p>
+
+  <div class="filters" *hasScope="'company.edit'">
+    <button class="btn" type="button" (click)="add()">Set a new rate</button>
+  </div>
+
+  @if (rates.error(); as error) {
+    <app-load-error [error]="error" (retry)="rates.reload()" />
+  } @else if (rates.hasValue()) {
+    @let t = tiles();
+    <div class="tiles">
+      <div class="tile">
+        <small>Rate in use</small>
+        @if (t.current; as current) {
+          <b class="num">៛{{ current.rate.rate | rate }}</b>
+          <div class="sub">per USD, since {{ current.rate.effective_date | date: 'd MMM y' }}</div>
+        } @else {
+          <b class="num">—</b>
+          <div class="sub alert">No rate set — sales cannot be made</div>
+        }
+      </div>
+      <div class="tile">
+        <small>Previous rate</small>
+        @if (t.previous; as previous) {
+          <b class="num">៛{{ previous.rate.rate | rate }}</b>
+          <div class="sub">
+            {{ previous.rate.effective_date | date: 'd MMM y' }} –
+            {{ previous.effectiveTo | date: 'd MMM y' }}
+          </div>
+        } @else {
+          <b class="num">—</b>
+          <div class="sub">None before it</div>
+        }
+      </div>
+      <div class="tile">
+        <small>Changes this year</small>
+        <b class="num">{{ t.changesThisYear }}</b>
+        <div class="sub">{{ t.year }}</div>
+      </div>
+      <div class="tile">
+        <small>Next change</small>
+        @if (t.next; as next) {
+          <b class="num">៛{{ next.rate.rate | rate }}</b>
+          <div class="sub">from {{ next.rate.effective_date | date: 'd MMM y' }}</div>
+        } @else {
+          <b class="num">—</b>
+          <div class="sub">None scheduled</div>
+        }
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-head"><h3>Rate history — KHR per USD</h3></div>
+      <table>
+        <thead>
+          <tr>
+            <th>Effective from</th>
+            <th>Effective to</th>
+            <th class="r">Rate</th>
+            <th>Set by</th>
+            <th>Status</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (row of rows(); track row.rate.id) {
+            <tr>
+              <td>{{ row.rate.effective_date | date: 'd MMM y' }}</td>
+              <td>{{ row.effectiveTo ? (row.effectiveTo | date: 'd MMM y') : '—' }}</td>
+              <td class="r num">{{ row.rate.rate | rate }}</td>
+              <td>{{ row.rate.set_by || '—' }}</td>
+              <td>
+                <span
+                  class="pill"
+                  [class.ok]="row.status === 'In use'"
+                  [class.credit]="row.status !== 'In use'"
+                  >{{ row.status }}</span
+                >
+              </td>
+              <td class="r">
+                <button type="button" class="rowlink" (click)="open(row)">
+                  {{ canEdit && !row.rate.is_in_use ? 'Edit' : 'View' }}
+                </button>
+              </td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="6" class="muted">No rates yet. Set one before the first sale.</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+      @if (total()) {
+        <div class="panel-note">Showing the latest {{ rows().length }} of {{ total() }} rates.</div>
+      }
+      <div class="panel-note">
+        A rate with sales against it can be viewed but not edited — a correction is a new row with a
+        new effective date.
+      </div>
+    </div>
+  } @else {
+    <p class="loading">Loading…</p>
+  }
+</div>

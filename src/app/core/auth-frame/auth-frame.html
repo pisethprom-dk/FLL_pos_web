@@ -1,0 +1,38 @@
+<!-- v1.1.0 -->
+<section class="signin-brand" aria-label="Shop">
+  <p class="signin-eyebrow">POS · Back office</p>
+  <div class="signin-shop">
+    @if (shop(); as shop) {
+      <div class="signin-id">
+        @if (shop.logo) {
+          <!-- The name is written beside it: no alt text, so it is not read twice. -->
+          <img class="signin-logo" [src]="shop.logo" alt="" />
+        }
+        <div class="signin-names">
+          <p class="signin-name">{{ shop.name }}</p>
+          @if (shop.name_kh) {
+            <p class="signin-name-kh" lang="km">{{ shop.name_kh }}</p>
+          }
+        </div>
+      </div>
+      @if (shop.address) {
+        <p class="signin-addr">{{ shop.address }}</p>
+      }
+    } @else if (unknown()) {
+      <p class="signin-name">POS back office</p>
+    }
+  </div>
+  <div class="signin-rule"></div>
+  <ul class="signin-areas" aria-label="What the back office covers">
+    <li>Sell</li>
+    <li>Quotations</li>
+    <li>Stock</li>
+    <li>Payments</li>
+  </ul>
+  <p class="signin-foot">You are signed out after an hour without use.</p>
+</section>
+<main class="signin-main">
+  <div class="signin-col">
+    <ng-content />
+  </div>
+</main>

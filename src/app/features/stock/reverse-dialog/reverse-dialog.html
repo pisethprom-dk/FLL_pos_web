@@ -1,0 +1,34 @@
+<!-- v1.0.0 -->
+<form (submit)="$event.preventDefault(); reverse()" novalidate>
+  <div class="modal-head">
+    <h3 id="reverse-title">Reverse {{ data.number }}?</h3>
+    <div class="spacer"></div>
+    <button type="button" class="modal-x" aria-label="Close" (click)="ref.close()">&times;</button>
+  </div>
+  <div class="form">
+    <p class="confirm-message">{{ data.effect }}</p>
+    <div class="form-grid one" style="margin-top: 16px">
+      <div class="field">
+        <label for="reverse-note">Why</label>
+        <textarea
+          id="reverse-note"
+          [formControl]="note"
+          placeholder="Keyed twice, wrong supplier, …"
+          cdkFocusInitial
+        ></textarea>
+        @if (note.touched && note.invalid) {
+          <span class="hint warn">Say why — it is kept on the reversing document.</span>
+        }
+      </div>
+    </div>
+    @for (message of errors(); track $index) {
+      <p class="form-error" role="alert">{{ message }}</p>
+    }
+  </div>
+  <div class="form-foot">
+    <button class="btn danger" type="submit" [disabled]="busy()">
+      {{ busy() ? 'Reversing…' : 'Reverse ' + data.number }}
+    </button>
+    <button class="btn ghost" type="button" (click)="ref.close()">Cancel</button>
+  </div>
+</form>

@@ -1,0 +1,45 @@
+<!-- v2.0.0 -->
+<app-auth-frame>
+  <h1 class="signin-title">Sign in</h1>
+  <p class="signin-sub">Use the username your shop's Admin gave you.</p>
+  @if (expired) {
+    <p class="note">Your session ended — sign in again.</p>
+  }
+  <form class="signin-form" [formGroup]="form" (ngSubmit)="submit()" novalidate>
+    <div class="field">
+      <label for="username">Username</label>
+      <input
+        id="username"
+        type="text"
+        formControlName="username"
+        autocomplete="username"
+        autocapitalize="none"
+        spellcheck="false"
+      />
+      @if (form.controls.username.touched && form.controls.username.invalid) {
+        <span class="hint warn">Enter your username.</span>
+      }
+    </div>
+    <div class="field">
+      <label for="password">Password</label>
+      <app-password-field>
+        <input
+          id="password"
+          type="password"
+          formControlName="password"
+          autocomplete="current-password"
+        />
+      </app-password-field>
+      @if (form.controls.password.touched && form.controls.password.invalid) {
+        <span class="hint warn">Enter your password.</span>
+      }
+    </div>
+    @for (message of errors(); track $index) {
+      <p class="form-error" role="alert">{{ message }}</p>
+    }
+    <button class="btn signin-btn" type="submit" [disabled]="busy()">
+      {{ busy() ? 'Signing in…' : 'Sign in' }}
+    </button>
+  </form>
+  <p class="signin-help">Forgot your password? <b>Ask an Admin to reset it.</b></p>
+</app-auth-frame>

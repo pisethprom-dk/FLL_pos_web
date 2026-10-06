@@ -1,0 +1,146 @@
+<!-- v1.0.0 -->
+<div class="page">
+  <p class="page-intro">
+    Store customers the shop knows by name. What they owe is not held here — it is worked out from
+    their invoices and payments.
+  </p>
+
+  <div class="filters">
+    <select aria-label="Credit" (change)="setCredit($any($event.target).value)">
+      <option value="all">All customers</option>
+      <option value="yes">On credit</option>
+      <option value="no">Cash only</option>
+      <option value="hold">On hold</option>
+    </select>
+    <select aria-label="Price" (change)="setTier($any($event.target).value)">
+      <option value="all">All prices</option>
+      <option value="RETAIL">Retail</option>
+      <option value="WHOLESALE">Wholesale</option>
+    </select>
+    <select aria-label="Status" (change)="setStatus($any($event.target).value)">
+      <option value="active">Active</option>
+      <option value="inactive">Inactive</option>
+      <option value="all">Active and inactive</option>
+    </select>
+    <input
+      type="search"
+      aria-label="Search customers"
+      placeholder="Search name, code or phone"
+      (input)="type($any($event.target).value)"
+    />
+    <button *hasScope="'partner.edit'" class="btn" type="button" (click)="open(null)">
+      Add customer
+    </button>
+  </div>
+
+  @if (counts.hasValue()) {
+    <div class="tiles three">
+      <div class="tile">
+        <small>Active customers</small>
+        <b class="num">{{ counts.value().active }}</b>
+        <div class="sub ok">Walk-in included</div>
+      </div>
+      <div class="tile">
+        <small>Allowed credit</small>
+        <b class="num">{{ counts.value().credit }}</b>
+        <div class="sub">May buy on account</div>
+      </div>
+      <div class="tile">
+        <small>On credit hold</small>
+        <b class="num">{{ counts.value().hold }}</b>
+        <div class="sub" [class.alert]="counts.value().hold > 0">No new credit sales</div>
+      </div>
+    </div>
+  }
+
+  @if (customers.error(); as error) {
+    <app-load-error [error]="error" (retry)="customers.reload()" />
+  } @else if (shown(); as list) {
+    <div class="panel">
+      <div class="panel-head">
+        <h3>Customers</h3>
+        <div class="spacer"></div>
+        @if (customers.isLoading()) {
+          <span class="muted" role="status">Updating…</span>
+        }
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>Code</th>
+            <th>Name</th>
+            <th>Price</th>
+            <th>Contact</th>
+            <th>Phone</th>
+            <th>Credit</th>
+            <th class="r">Limit</th>
+            <th class="r">Terms</th>
+            <th>Status</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (customer of list.results; track customer.id) {
+            @let pill = creditPill(customer.credit_status);
+            <tr>
+              <td class="num nowrap">{{ customer.code }}</td>
+              <td>
+                {{ customer.name }}
+                @if (customer.is_system) {
+                  <span class="cell-sub">System record</span>
+                } @else if (customer.name_kh) {
+                  <span class="cell-sub" lang="km">{{ customer.name_kh }}</span>
+                }
+              </td>
+              <td>{{ tierLabel(customer.price_tier) }}</td>
+              <td>{{ customer.contact_person || '—' }}</td>
+              <td class="num nowrap">{{ customer.phone || '—' }}</td>
+              <td>
+                <span
+                  class="pill"
+                  [class.ok]="pill.tone === 'ok'"
+                  [class.low]="pill.tone === 'low'"
+                  >{{ pill.label }}</span
+                >
+              </td>
+              <td class="r num">
+                {{ customer.allow_credit ? (customer.credit_limit | usd) : '—' }}
+              </td>
+              <td class="r num nowrap">
+                {{ customer.allow_credit ? customer.payment_terms_days + ' days' : '—' }}
+              </td>
+              <td>
+                @if (customer.is_active === false) {
+                  <span class="pill credit">Inactive</span>
+                } @else {
+                  <span class="pill ok">Active</span>
+                }
+              </td>
+              <td class="r">
+                @if (customer.is_system) {
+                  <button type="button" class="rowlink" (click)="open(customer)">View</button>
+                } @else if (canEdit) {
+                  <button type="button" class="rowlink" (click)="open(customer)">Edit</button>
+                }
+              </td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="10" class="muted">No customer matches these filters.</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+      @if (list.count > list.results.length || page() > 1) {
+        <app-pager [count]="list.count" [page]="page()" (pageChange)="page.set($event)" />
+      } @else {
+        <div class="panel-note">
+          {{ list.count }} {{ list.count === 1 ? 'customer' : 'customers' }}. Price and credit are
+          set independently — a trade buyer who pays cash still gets wholesale.
+        </div>
+      }
+    </div>
+  } @else {
+    <p class="loading">Loading…</p>
+  }
+</div>

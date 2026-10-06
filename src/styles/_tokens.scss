@@ -1,0 +1,29 @@
+// v1.1.0 — colours and shared measures, as in the mockup, plus the shop's brand
+// (option A, agreed 2026-10-05): the logo's teal and yellow.
+:root{
+  --ink:#14232E;
+  --ink-soft:#2C4050;
+  --paper:#F6F4EF;
+  --surface:#FFFFFF;
+  --line:#DCD8D0;
+  --line-strong:#BEB8AD;
+  --usd:#14232E;
+  --khr:#9A6B1E;
+  --khr-bg:#FBF3E2;
+  --good:#2F6B4F;
+  --warn:#B6362C;
+  --muted:#6C7A85;
+  --radius:4px;
+
+  // Added: the brand, measured from the logo. Yellow is a fill, never text on
+  // the light pages (1.7:1 on white); text stays ink, riel amounts stay --khr.
+  --brand-teal:#00727A;        // white on it 5.7:1
+  --brand-yellow:#FFBE00;      // ink on it 9.6:1
+  --side:#0B3F45;              // the teal, darkened: sidebar and sign-in panel
+  --side-text:#CFE0E1;         // 9.4:1 on --side
+  --side-muted:#8FB3B6;        // 5.1:1 on --side — headings, the address
+  --side-dim:#6A9196;          // 3.4:1 on --side — screens not built yet
+  --primary:var(--brand-teal); // buttons, links, focus
+  --primary-hover:#005F66;     // white on it 7.4:1
+  box-sizing:border-box;
+}

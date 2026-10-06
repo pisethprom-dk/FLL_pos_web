@@ -1,0 +1,90 @@
+<!-- v1.0.0 -->
+<div class="page">
+  <p class="page-intro">
+    Two levels only — a group and its sub-groups. Deeper nesting is not supported.
+  </p>
+
+  <div class="filters">
+    <select aria-label="Show" [value]="show()" (change)="show.set($any($event.target).value)">
+      <option value="all">All categories</option>
+      <option value="top">Top level only</option>
+      <option value="inactive">Inactive</option>
+    </select>
+    <input
+      type="search"
+      aria-label="Search categories"
+      placeholder="Search category"
+      [value]="search()"
+      (input)="search.set($any($event.target).value)"
+    />
+    <button *hasScope="'catalogue.edit'" class="btn" type="button" (click)="open(null)">
+      Add category
+    </button>
+  </div>
+
+  @if (categories.error(); as error) {
+    <app-load-error [error]="error" (retry)="categories.reload()" />
+  } @else if (categories.hasValue()) {
+    <div class="panel">
+      <div class="panel-head"><h3>Categories</h3></div>
+      <table>
+        <thead>
+          <tr>
+            <th>Code</th>
+            <th>Category</th>
+            <th>Parent</th>
+            <th class="r">Order</th>
+            <th>Status</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (category of rows(); track category.id) {
+            <tr>
+              <td class="num nowrap">{{ category.code }}</td>
+              @if (category.parent == null) {
+                <td>
+                  <b>{{ category.name }}</b>
+                  @if (category.name_kh) {
+                    <span class="cell-sub" lang="km">{{ category.name_kh }}</span>
+                  }
+                </td>
+              } @else {
+                <td class="indent">
+                  {{ category.name }}
+                  @if (category.name_kh) {
+                    <span class="cell-sub" lang="km">{{ category.name_kh }}</span>
+                  }
+                </td>
+              }
+              <td>{{ category.parent_name || '—' }}</td>
+              <td class="r num">{{ category.display_order }}</td>
+              <td>
+                @if (category.is_active === false) {
+                  <span class="pill credit">Inactive</span>
+                } @else {
+                  <span class="pill ok">Active</span>
+                }
+              </td>
+              <td class="r">
+                @if (canEdit) {
+                  <button type="button" class="rowlink" (click)="open(category)">Edit</button>
+                }
+              </td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="6" class="muted">No category to show.</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+      <div class="panel-note">
+        {{ categories.value().length }} categories · {{ topCount() }} top level. A category holding
+        products cannot be deleted — deactivate it instead.
+      </div>
+    </div>
+  } @else {
+    <p class="loading">Loading…</p>
+  }
+</div>

@@ -1,0 +1,54 @@
+<!-- v1.0.0 -->
+<div class="scan cascade">
+  <input
+    #code
+    type="text"
+    aria-label="Barcode or code"
+    placeholder="Scan a barcode or type a code, then Enter"
+    autocomplete="off"
+    [disabled]="disabled()"
+    (keydown.enter)="$event.preventDefault(); scan(code)"
+  />
+  <select aria-label="Brand" [disabled]="disabled()" (change)="setBrand($any($event.target).value)">
+    <option value="">Brand…</option>
+    @if (brands.hasValue()) {
+      @for (b of brands.value(); track b.id) {
+        <option [value]="b.id" [selected]="brand() === b.id">{{ b.name }}</option>
+      }
+    }
+  </select>
+  <select
+    aria-label="Category"
+    [disabled]="disabled()"
+    (change)="setCategory($any($event.target).value)"
+  >
+    <option value="">Category…</option>
+    @for (c of categoryOptions(); track c.id) {
+      <option [value]="c.id" [selected]="category() === c.id">{{ c.label }}</option>
+    }
+  </select>
+  <select
+    aria-label="Product"
+    [disabled]="disabled() || options().length === 0"
+    (change)="choose($any($event.target).value)"
+  >
+    <option value="" [selected]="chosen() === null">Product…</option>
+    @for (p of options(); track p.id) {
+      <option [value]="p.id" [selected]="chosen() === p.id">{{ label(p) }}</option>
+    }
+  </select>
+  <button class="btn" type="button" [disabled]="disabled() || chosen() === null" (click)="add()">
+    {{ addLabel() }}
+  </button>
+</div>
+@if (disabled() && hint()) {
+  <p class="scan-note">{{ hint() }}</p>
+} @else if (searching()) {
+  <p class="scan-note" role="status">Looking…</p>
+} @else if (message()) {
+  <p class="scan-note" role="status">{{ message() }}</p>
+} @else if (capped()) {
+  <p class="scan-note">
+    Showing the first 50 products. Choose a brand and a category together, or type more of a code.
+  </p>
+}

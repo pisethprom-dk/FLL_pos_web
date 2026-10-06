@@ -1,0 +1,126 @@
+<!-- v1.0.0 -->
+<div class="page">
+  <p class="page-intro">
+    Any change in quantity that is not a purchase, a sale or a count. Every adjustment needs a
+    reason, because the reason is what the reports group by.
+  </p>
+
+  <div class="filters">
+    <select aria-label="Period" (change)="setPeriod($any($event.target).value)">
+      @for (p of periods; track p.value) {
+        <option [value]="p.value" [selected]="period() === p.value">{{ p.label }}</option>
+      }
+    </select>
+    <select aria-label="Reason" (change)="setReason($any($event.target).value)">
+      <option value="">All reasons</option>
+      @for (r of reasons; track r.value) {
+        <option [value]="r.value" [selected]="reason() === r.value">{{ r.label }}</option>
+      }
+    </select>
+    <select aria-label="Status" (change)="setStatus($any($event.target).value)">
+      <option value="all">All statuses</option>
+      <option value="DRAFT">Draft</option>
+      <option value="POSTED">Posted</option>
+    </select>
+    <input
+      type="search"
+      aria-label="Search adjustments"
+      placeholder="Search number or note"
+      (input)="type($any($event.target).value)"
+    />
+    <button *hasScope="'stock.post'" class="btn" type="button" (click)="open(null)">
+      New adjustment
+    </button>
+  </div>
+
+  @if (counts.hasValue()) {
+    <div class="tiles two">
+      <div class="tile">
+        <small>Posted this month</small>
+        <b class="num">{{ counts.value().posted }}</b>
+        <div class="sub">Every reason</div>
+      </div>
+      <div class="tile">
+        <small>Drafts waiting</small>
+        <b class="num">{{ counts.value().drafts }}</b>
+        <div class="sub" [class.alert]="counts.value().drafts > 0">No stock moved yet</div>
+      </div>
+    </div>
+  }
+
+  @if (docs.error(); as error) {
+    <app-load-error [error]="error" (retry)="docs.reload()" />
+  } @else if (shown(); as list) {
+    <div class="panel">
+      <div class="panel-head">
+        <h3>Adjustments</h3>
+        <div class="spacer"></div>
+        @if (docs.isLoading()) {
+          <span class="muted" role="status">Updating…</span>
+        }
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>Number</th>
+            <th>Date</th>
+            <th>Reason</th>
+            <th>Supplier</th>
+            <th>Note</th>
+            <th class="r">Lines</th>
+            <th class="r">Value</th>
+            <th>Status</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (doc of list.results; track doc.id) {
+            @let state = docState(doc);
+            <tr>
+              <td class="num nowrap">
+                {{ doc.number }}
+                @if (doc.reverses_number) {
+                  <span class="cell-sub">Reverses {{ doc.reverses_number }}</span>
+                } @else if (doc.reversed_by_number) {
+                  <span class="cell-sub">Reversed by {{ doc.reversed_by_number }}</span>
+                }
+              </td>
+              <td class="nowrap">{{ doc.doc_date | date: 'd MMM y' }}</td>
+              <td>{{ reasonOf(doc.reason)?.label ?? doc.reason }}</td>
+              <td>{{ doc.supplier_name ?? '—' }}</td>
+              <td class="muted">{{ doc.note || '—' }}</td>
+              <td class="r num">{{ doc.lines?.length ?? 0 }}</td>
+              <td class="r num" [class.neg]="doc.total?.startsWith('-')">{{ doc.total | usd }}</td>
+              <td>
+                <span
+                  class="pill"
+                  [class.ok]="state.tone === 'ok'"
+                  [class.credit]="state.tone === 'credit'"
+                  [class.low]="state.tone === 'low'"
+                  >{{ state.label }}</span
+                >
+              </td>
+              <td class="r">
+                <button type="button" class="rowlink" (click)="open(doc)">Open</button>
+              </td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="9" class="muted">No adjustment matches these filters.</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+      @if (list.count > list.results.length || page() > 1) {
+        <app-pager [count]="list.count" [page]="page()" (pageChange)="page.set($event)" />
+      } @else {
+        <div class="panel-note">
+          {{ list.count }} {{ list.count === 1 ? 'adjustment' : 'adjustments' }}. A draft's value
+          shows once posted — it goes at the average cost of that moment.
+        </div>
+      }
+    </div>
+  } @else {
+    <p class="loading">Loading…</p>
+  }
+</div>

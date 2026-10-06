@@ -1,0 +1,33 @@
+// v1.3.0 — tables and status pills.
+table{width:100%;border-collapse:collapse;}
+th,td{padding:9px 18px;text-align:left;border-bottom:1px solid var(--line);font-size:13.5px;}
+thead th{font-weight:600;color:var(--muted);font-size:12.5px;background:#FBFAF7;}
+tbody tr:last-child td{border-bottom:0;}
+.r{text-align:right;font-variant-numeric:tabular-nums;}
+tfoot td{font-weight:600;background:#FBFAF7;border-top:1px solid var(--line-strong);border-bottom:0;}
+.khr-cell{color:var(--khr);font-size:12.5px;}
+// Changed: a pill never breaks across lines ("Out of / stock").
+.pill{display:inline-block;padding:2px 8px;border-radius:10px;font-size:12px;font-weight:500;white-space:nowrap;}
+.pill.paid{background:#E6F0EA;color:var(--good);}
+.pill.credit{background:#FBF3E2;color:var(--khr);}
+.pill.low{background:#F9E7E5;color:var(--warn);}
+.pill.ok{background:#E6F0EA;color:var(--good);}
+
+@media (max-width:760px){
+  th,td{padding:8px 12px;}
+}
+
+// Added: a small image in a table cell, such as a payment note's QR code.
+.thumb{display:block;height:36px;width:auto;max-width:72px;object-fit:contain;
+  border:1px solid var(--line);border-radius:2px;background:#fff;}
+// Added: the mockup wrote these inline. A second, muted line in a cell (a
+// product's model and warranty); a sub-category indented under its group; an
+// image beside a name.
+.cell-sub{display:block;color:var(--muted);font-size:12.5px;}
+td.indent{padding-left:38px;}
+.with-thumb{display:flex;align-items:center;gap:10px;}
+// Added: "1–50 of 87" with Previous and Next under a paged list.
+.pager{display:flex;align-items:center;gap:10px;padding:12px 18px;border-top:1px solid var(--line);font-size:13px;color:var(--muted);}
+.pager-range{margin-right:auto;}
+// Added: a code that must read as one word (TL-0101), however narrow the column.
+.nowrap{white-space:nowrap;}

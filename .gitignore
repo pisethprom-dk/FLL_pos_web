@@ -45,3 +45,6 @@ Thumbs.db
 
 # macOS
 .DS_Store
+
+# The agreed mockup lives in the backend repo (FLL_pos_api); this is a local copy.
+/mock-up/

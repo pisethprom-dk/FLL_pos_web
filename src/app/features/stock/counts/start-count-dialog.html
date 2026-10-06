@@ -1,0 +1,61 @@
+<!-- v1.0.0 -->
+<form [formGroup]="form" (ngSubmit)="start()" novalidate>
+  <div class="modal-head">
+    <h3 id="start-count-title">Start a count</h3>
+    <div class="spacer"></div>
+    <button type="button" class="modal-x" aria-label="Close" (click)="ref.close()">&times;</button>
+  </div>
+  <div class="form">
+    <div class="note" style="margin-bottom: 16px">
+      The sheet does not show the expected quantity, so the number entered is the number on the
+      shelf. Lines left blank are skipped when posting, never counted as zero.
+    </div>
+    <div class="form-grid">
+      <div class="field wide">
+        <label for="count-category">Category</label>
+        <select id="count-category" formControlName="category" cdkFocusInitial>
+          <option [ngValue]="null" disabled>Choose a category…</option>
+          @for (c of categories; track c.id) {
+            <option [ngValue]="c.id">{{ c.label }}</option>
+          }
+        </select>
+        <span class="hint">
+          Every product in it that tracks stock goes on the sheet — its sub-categories too.
+        </span>
+        @if (invalid('category')) {
+          <span class="hint warn">Choose what to count.</span>
+        }
+        @for (message of errorsFor('category'); track $index) {
+          <span class="hint warn">{{ message }}</span>
+        }
+      </div>
+      <div class="field">
+        <label for="count-date">Date started</label>
+        <input id="count-date" type="date" formControlName="doc_date" [max]="today" />
+        @if (invalid('doc_date')) {
+          <span class="hint warn">A date, today or earlier.</span>
+        }
+        @for (message of errorsFor('doc_date'); track $index) {
+          <span class="hint warn">{{ message }}</span>
+        }
+      </div>
+      <div class="field">
+        <label for="count-by">Counted by</label>
+        <input id="count-by" type="text" [value]="counter" readonly />
+      </div>
+      <div class="field wide">
+        <label for="count-note">Note</label>
+        <textarea id="count-note" formControlName="note" rows="2"></textarea>
+      </div>
+    </div>
+    @for (message of formErrors(); track $index) {
+      <p class="form-error" role="alert">{{ message }}</p>
+    }
+  </div>
+  <div class="form-foot">
+    <button class="btn" type="submit" [disabled]="busy()">
+      {{ busy() ? 'Starting…' : 'Start the count' }}
+    </button>
+    <button class="btn ghost" type="button" (click)="ref.close()">Cancel</button>
+  </div>
+</form>

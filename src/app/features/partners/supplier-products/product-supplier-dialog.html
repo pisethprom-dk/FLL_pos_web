@@ -1,0 +1,123 @@
+<!-- v1.0.1 -->
+<div class="modal-head">
+  <h3 id="link-title">
+    {{ link ? link.product_code + ' from ' + link.supplier_name : 'Add a supplier product' }}
+  </h3>
+  <div class="spacer"></div>
+  <button type="button" class="modal-x" aria-label="Close" (click)="ref.close()">&times;</button>
+</div>
+@if (!link && !product()) {
+  <app-product-picker [stockOnly]="false" addLabel="Choose" (picked)="pick($event)" />
+}
+<form [formGroup]="form" (ngSubmit)="save()" novalidate>
+  <div class="form">
+    <div class="form-grid">
+      <div class="field wide">
+        <span class="label-like">Product</span>
+        @if (product(); as p) {
+          <div class="picked">
+            <b>{{ p.name }}</b>
+            <span class="muted num">{{ p.code }} · sold by the {{ p.unit_name }}</span>
+            @if (!link) {
+              <button type="button" class="rowlink" (click)="product.set(null)">Change</button>
+            }
+          </div>
+        } @else {
+          <span class="hint" [class.warn]="productMissing()">
+            Find it above: scan or type its code, or narrow by brand and category.
+          </span>
+        }
+        @for (message of errorsFor('product'); track $index) {
+          <span class="hint warn">{{ message }}</span>
+        }
+      </div>
+      <div class="field">
+        <label for="l-supplier">Supplier</label>
+        <select id="l-supplier" formControlName="supplier">
+          <option [ngValue]="null" disabled>Choose a supplier…</option>
+          @if (link) {
+            <option [ngValue]="link.supplier">{{ link.supplier_name }}</option>
+          } @else {
+            @for (s of data.suppliers; track s.id) {
+              <option [ngValue]="s.id">{{ s.name }}</option>
+            }
+          }
+        </select>
+        @if (invalid('supplier')) {
+          <span class="hint warn">Choose the supplier.</span>
+        }
+        @for (message of errorsFor('supplier'); track $index) {
+          <span class="hint warn">{{ message }}</span>
+        }
+      </div>
+      <div class="field">
+        <label for="l-sku">Their code</label>
+        <input id="l-sku" type="text" formControlName="supplier_sku" placeholder="TCSPA14601" />
+        <span class="hint">The supplier's own code for this product, as on their invoice.</span>
+        @for (message of errorsFor('supplier_sku'); track $index) {
+          <span class="hint warn">{{ message }}</span>
+        }
+      </div>
+      <div class="field">
+        <label for="l-unit">Bought as</label>
+        <select id="l-unit" formControlName="pack_unit">
+          <option [ngValue]="null">
+            {{ product() ? product()!.unit_name + ' — one at a time' : 'One at a time' }}
+          </option>
+          @for (u of packUnits(); track u.id) {
+            <option [ngValue]="u.id">{{ u.name }}</option>
+          }
+        </select>
+        <span class="hint">Their usual pack, such as a carton.</span>
+        @for (message of errorsFor('pack_unit'); track $index) {
+          <span class="hint warn">{{ message }}</span>
+        }
+      </div>
+      <div class="field">
+        <label for="l-size">Per pack</label>
+        <input id="l-size" type="text" inputmode="decimal" formControlName="pack_size" />
+        <span class="hint">
+          How many in one pack, counted in the product's own unit{{
+            product() ? ' (' + product()!.unit_name + ')' : ''
+          }}.
+        </span>
+        @if (invalid('pack_size')) {
+          <span class="hint warn">A number above zero, up to two decimals.</span>
+        }
+        @for (message of errorsFor('pack_size'); track $index) {
+          <span class="hint warn">{{ message }}</span>
+        }
+      </div>
+      <div class="field wide">
+        <label class="check">
+          <input type="checkbox" formControlName="is_preferred" />
+          <span>Preferred supplier for this product</span>
+        </label>
+        <span class="hint">Marking it unmarks the product's other preferred supplier.</span>
+      </div>
+      <div class="field wide">
+        <label for="l-notes">Notes</label>
+        <textarea
+          id="l-notes"
+          formControlName="notes"
+          placeholder="Lead time, minimum order, anything the buyer should remember"
+        ></textarea>
+      </div>
+    </div>
+    @for (message of formErrors(); track $index) {
+      <p class="form-error" role="alert">{{ message }}</p>
+    }
+  </div>
+  <div class="form-foot">
+    <button class="btn" type="submit" [disabled]="busy()">
+      {{ busy() ? 'Saving…' : 'Save link' }}
+    </button>
+    <button class="btn ghost" type="button" (click)="ref.close()">Cancel</button>
+    @if (link) {
+      <div class="spacer"></div>
+      <button class="btn danger" type="button" [disabled]="busy()" (click)="remove()">
+        Remove link
+      </button>
+    }
+  </div>
+</form>

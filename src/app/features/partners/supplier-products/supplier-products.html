@@ -1,0 +1,110 @@
+<!-- v1.0.0 -->
+<div class="page">
+  <p class="page-intro">
+    Which supplier carries which product, under their own code and in their usual pack. A stock-in
+    from that supplier fills the pack in for you. No prices here — what was paid is on each
+    stock-in.
+  </p>
+
+  <div class="filters">
+    <select aria-label="Supplier" (change)="setSupplier($any($event.target).value)">
+      <option value="">All suppliers</option>
+      @if (suppliers.hasValue()) {
+        @for (s of suppliers.value(); track s.id) {
+          <option [value]="s.id" [selected]="supplier() === s.id">
+            {{ s.short_name || s.name }}{{ s.is_active === false ? ' (inactive)' : '' }}
+          </option>
+        }
+      }
+    </select>
+    <select aria-label="Preferred" (change)="setPreferred($any($event.target).value)">
+      <option value="all">All links</option>
+      <option value="preferred">Preferred supplier only</option>
+    </select>
+    <button
+      *hasScope="'partner.edit'"
+      class="btn"
+      type="button"
+      [disabled]="!listsReady()"
+      (click)="open(null)"
+    >
+      Add link
+    </button>
+  </div>
+
+  @if (links.error(); as error) {
+    <app-load-error [error]="error" (retry)="links.reload()" />
+  } @else if (shown(); as list) {
+    <div class="panel">
+      <div class="panel-head">
+        <h3>Supplier products</h3>
+        <div class="spacer"></div>
+        @if (links.isLoading()) {
+          <span class="muted" role="status">Updating…</span>
+        }
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>Product</th>
+            <th>Supplier</th>
+            <th>Their code</th>
+            <th>Usual pack</th>
+            <th>Preferred</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (link of list.results; track link.id) {
+            <tr>
+              <td>
+                {{ link.product_name }}
+                <span class="cell-sub">{{ link.product_code }}</span>
+              </td>
+              <td>{{ link.supplier_name }}</td>
+              <td class="num">{{ link.supplier_sku || '—' }}</td>
+              <td class="nowrap">{{ packLabel(link) }}</td>
+              <td>
+                @if (link.is_preferred) {
+                  <span class="pill ok">Preferred</span>
+                }
+              </td>
+              <td class="r">
+                @if (canEdit) {
+                  <button
+                    type="button"
+                    class="rowlink"
+                    [disabled]="!listsReady()"
+                    (click)="open(link)"
+                  >
+                    Edit
+                  </button>
+                }
+              </td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="6" class="muted">
+                @if (supplier() === null && !preferredOnly()) {
+                  No links yet. Add one for each product a supplier carries.
+                } @else {
+                  No link matches these filters.
+                }
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+      @if (list.count > list.results.length || page() > 1) {
+        <app-pager [count]="list.count" [page]="page()" (pageChange)="page.set($event)" />
+      } @else {
+        <div class="panel-note">
+          {{ list.count }} {{ list.count === 1 ? 'link' : 'links' }}. One preferred supplier per
+          product — marking a new one unmarks the last.
+        </div>
+      }
+    </div>
+  } @else {
+    <p class="loading">Loading…</p>
+  }
+</div>

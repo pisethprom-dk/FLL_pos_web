@@ -1,0 +1,16 @@
+// v1.1.0 — the mockup's modal, fitted to CDK Dialog (shared/dialog/modal.ts).
+// CDK supplies the overlay, backdrop, focus trap and Escape; the pane gets the
+// card look, the backdrop the veil. Widths and the 44px top offset are set when
+// the dialog opens.
+.modal-veil{background:rgba(20,35,46,.42);}
+.modal-card{
+  background:var(--surface);border:1px solid var(--line-strong);
+  border-radius:var(--radius);box-shadow:0 18px 44px rgba(20,35,46,.22);
+}
+// A tall form scrolls inside the card rather than off the screen.
+.modal-card .cdk-dialog-container{overflow-y:auto;}
+.modal-head{padding:15px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:12px;}
+.modal-head h3{margin:0;font-size:15px;font-weight:600;}
+.modal-head .spacer{flex:1;}
+.modal-x{background:none;border:0;cursor:pointer;font-size:19px;line-height:1;color:var(--muted);padding:2px 4px;}
+.modal-x:hover{color:var(--ink);}

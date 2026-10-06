@@ -1,0 +1,17 @@
+// v1.0.0 — "How it prints" on the payment notes screen. The mockup drew this
+// with inline styles; these are the same values, named.
+.print-preview{border:1px solid var(--line-strong);border-radius:var(--radius);padding:18px 20px;background:#FCFBF8;}
+.print-preview .shop{text-align:center;font-weight:600;}
+.print-preview .addr{text-align:center;color:var(--muted);font-size:12.5px;margin-bottom:14px;}
+// Added: stands in for the invoice lines and totals, which come from a sale.
+.print-preview .body{border:1px dashed var(--line);border-radius:2px;color:var(--muted);text-align:center;
+  padding:14px;font-size:12.5px;margin-bottom:14px;}
+.print-preview .how{border-top:1px dashed var(--line-strong);padding-top:12px;font-size:12.5px;}
+.print-preview .how h5{margin:0 0 7px;font-size:12.5px;font-weight:600;}
+.print-preview .way{display:flex;gap:14px;align-items:flex-start;margin-bottom:9px;}
+.print-preview .way:last-child{margin-bottom:0;}
+.print-preview .way img{width:54px;height:54px;object-fit:contain;border:1px solid var(--line-strong);
+  border-radius:2px;background:#fff;flex:0 0 auto;}
+.print-preview .foot{text-align:center;color:var(--muted);font-size:12px;margin-top:14px;
+  border-top:1px solid var(--line);padding-top:10px;}
+.preview-note{color:var(--muted);font-size:12.5px;margin:14px 0 0;}

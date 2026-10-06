@@ -1,0 +1,88 @@
+<!-- v1.3.0 -->
+<div class="shell">
+  <aside class="side">
+    <!-- Logo and name only: no address here (owner's choice, 2026-10-05). -->
+    <div class="brand">
+      @if (profile()?.logo; as logo) {
+        <img [src]="logo" alt="" />
+      }
+      <b>{{ profile()?.name }}</b>
+    </div>
+
+    <nav class="nav" aria-label="Main menu">
+      @for (section of menu(); track section.key) {
+        @if (section.heading) {
+          <h4>{{ section.heading }}</h4>
+        }
+        @for (item of section.items; track item.key) {
+          @if (item.kind === 'link') {
+            @if (item.screen.ready) {
+              <a
+                [routerLink]="'/' + item.screen.path"
+                [attr.aria-current]="item.active ? 'page' : null"
+              >
+                {{ item.screen.label }}
+              </a>
+            } @else {
+              <span class="soon" aria-disabled="true" title="Not built yet">{{
+                item.screen.label
+              }}</span>
+            }
+          } @else {
+            <button
+              type="button"
+              class="grp"
+              [class.has-active]="item.hasActive"
+              [attr.aria-expanded]="item.open"
+              [attr.aria-controls]="'grp-' + item.key"
+              (click)="toggle(item.key)"
+            >
+              {{ item.label }} <span class="caret" aria-hidden="true">&#9662;</span>
+            </button>
+            <div class="sub" [id]="'grp-' + item.key" [hidden]="!item.open">
+              @for (link of item.links; track link.key) {
+                @if (link.screen.ready) {
+                  <a
+                    [routerLink]="'/' + link.screen.path"
+                    [attr.aria-current]="link.active ? 'page' : null"
+                  >
+                    {{ link.screen.label }}
+                  </a>
+                } @else {
+                  <span class="soon" aria-disabled="true" title="Not built yet">{{
+                    link.screen.label
+                  }}</span>
+                }
+              }
+            </div>
+          }
+        }
+      }
+    </nav>
+
+    <div class="side-foot">
+      <b>{{ user()?.full_name || user()?.username }}</b>
+      {{ roleLabel() }}
+      <div class="foot-links">
+        <a routerLink="/change-password">Change password</a>
+        <button type="button" (click)="signOut()">Sign out</button>
+      </div>
+    </div>
+  </aside>
+
+  <div class="main">
+    <header class="top">
+      <h1>{{ title() }}</h1>
+      <div class="spacer"></div>
+      @if (rate(); as rate) {
+        <span class="chip"
+          >Rate today <b class="num">៛{{ rate.rate | rate }}</b> / {{ rate.base_currency }}</span
+        >
+      }
+      <span class="chip">{{ today | date: 'EEE d MMM y' }}</span>
+    </header>
+    <main>
+      <router-outlet />
+    </main>
+  </div>
+</div>

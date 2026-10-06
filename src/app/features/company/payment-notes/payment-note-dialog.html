@@ -1,0 +1,85 @@
+<!-- v1.0.0 -->
+<form [formGroup]="form" (ngSubmit)="save()" novalidate>
+  <div class="modal-head">
+    <h3 id="note-title">{{ note ? 'Edit ' + note.payment_type : 'Add note' }}</h3>
+    <div class="spacer"></div>
+    <button type="button" class="modal-x" aria-label="Close" (click)="ref.close()">&times;</button>
+  </div>
+  <div class="form">
+    <div class="form-grid">
+      <div class="field wide">
+        <label for="note-type">Payment type</label>
+        <input
+          id="note-type"
+          type="text"
+          formControlName="payment_type"
+          placeholder="ABA Bank"
+          cdkFocusInitial
+        />
+        <span class="hint">The heading shown on the invoice.</span>
+        @if (form.controls.payment_type.touched && form.controls.payment_type.invalid) {
+          <span class="hint warn">Enter a heading, up to 150 characters.</span>
+        }
+        @for (message of errorsFor('payment_type'); track $index) {
+          <span class="hint warn">{{ message }}</span>
+        }
+      </div>
+      <div class="field wide">
+        <label for="note-info">Payment information</label>
+        <textarea
+          id="note-info"
+          formControlName="payment_info"
+          placeholder="Account 000 123 456&#10;Sok Heng Mart Co., Ltd"
+        ></textarea>
+        <span class="hint">Line breaks are kept as typed.</span>
+        @for (message of errorsFor('payment_info'); track $index) {
+          <span class="hint warn">{{ message }}</span>
+        }
+      </div>
+      <div class="field">
+        <label for="note-image">Image</label>
+        <app-image-field
+          inputId="note-image"
+          [current]="note?.image"
+          [choice]="image()"
+          (choiceChange)="pickImage($event)"
+        />
+        <span class="hint">A QR code or bank logo. Optional.</span>
+        @for (message of errorsFor('image'); track $index) {
+          <span class="hint warn">{{ message }}</span>
+        }
+      </div>
+      <div class="field">
+        <label for="note-order">Row order</label>
+        <input id="note-order" type="number" formControlName="row_order" />
+        @if (form.controls.row_order.touched && form.controls.row_order.invalid) {
+          <span class="hint warn">Enter a whole number.</span>
+        }
+        @for (message of errorsFor('row_order'); track $index) {
+          <span class="hint warn">{{ message }}</span>
+        }
+      </div>
+      <div class="field wide">
+        <label class="check">
+          <input type="checkbox" formControlName="is_active" />
+          <span>Show on new invoices</span>
+        </label>
+      </div>
+    </div>
+    @for (message of formErrors(); track $index) {
+      <p class="form-error" role="alert">{{ message }}</p>
+    }
+  </div>
+  <div class="form-foot">
+    <button class="btn" type="submit" [disabled]="busy()">
+      {{ busy() ? 'Saving…' : 'Save note' }}
+    </button>
+    <button class="btn ghost" type="button" (click)="ref.close()">Cancel</button>
+    @if (note) {
+      <div class="spacer"></div>
+      <button class="btn danger" type="button" [disabled]="busy()" (click)="delete()">
+        Delete
+      </button>
+    }
+  </div>
+</form>

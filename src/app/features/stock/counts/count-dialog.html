@@ -1,0 +1,219 @@
+<!-- v1.0.0 -->
+@let d = doc();
+<div class="modal-head">
+  <h3 id="count-title">{{ counting() ? 'Counting ' + d.category_name : 'Count ' + d.number }}</h3>
+  <div class="spacer"></div>
+  <button type="button" class="modal-x" aria-label="Close" (click)="close()">&times;</button>
+</div>
+<div class="form">
+  @if (d.reverses_number) {
+    <div class="note" style="margin-bottom: 16px">
+      This reverses {{ d.reverses_number }}: every difference went back the other way, at the cost
+      stamped on its line.
+    </div>
+  } @else if (d.status === 'POSTED') {
+    <div class="note" style="margin-bottom: 16px">
+      Posted {{ d.posted_at | date: 'd MMM y, HH:mm' }} by {{ d.posted_by_name ?? '—' }}.
+      @if (d.reversed_by_number) {
+        Reversed by {{ d.reversed_by_number }}.
+      } @else {
+        Expected is what the system held at the moment each line was counted.
+      }
+    </div>
+  } @else {
+    <div class="note" style="margin-bottom: 16px">
+      Counting {{ d.category_name }}. The expected quantity is hidden until the count is posted, so
+      the number entered is the number on the shelf. Each line saves as you enter it.
+    </div>
+  }
+  <div class="form-grid">
+    <div class="field">
+      <label for="count-cat">Category</label>
+      <input id="count-cat" type="text" [value]="d.category_name" readonly />
+    </div>
+    <div class="field">
+      <label for="count-started">Date started</label>
+      <input id="count-started" type="text" [value]="d.doc_date | date: 'd MMM y'" readonly />
+    </div>
+    <div class="field">
+      <label for="count-by-name">Counted by</label>
+      <input id="count-by-name" type="text" [value]="d.counted_by_name ?? '—'" readonly />
+    </div>
+    <div class="field">
+      <label for="count-number">Number</label>
+      <input id="count-number" type="text" [value]="d.number" readonly />
+    </div>
+    @if (d.note) {
+      <div class="field wide">
+        <label for="count-note-text">Note</label>
+        <input id="count-note-text" type="text" [value]="d.note" readonly />
+      </div>
+    }
+  </div>
+</div>
+
+@if (counting()) {
+  <div class="sheet-tools">
+    <input
+      #words
+      type="search"
+      aria-label="Find on the sheet"
+      placeholder="Find a code, name or shelf"
+      (input)="find.set(words.value)"
+    />
+    <label class="check">
+      <input #open type="checkbox" (change)="openOnly.set(open.checked)" />
+      <span>Not counted yet</span>
+    </label>
+    <span class="progress" role="status">{{ counted() }} of {{ d.lines_total }} counted</span>
+  </div>
+  <div class="lines-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Product</th>
+          <th>Shelf</th>
+          <th>Unit</th>
+          <th class="r">Counted</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (line of shown(); track line.id) {
+          @let e = entry(line);
+          <tr>
+            <td>
+              {{ line.product_name }}
+              <span class="cell-sub num">{{ line.product_code }}</span>
+            </td>
+            <td class="num">{{ line.shelf_location || '—' }}</td>
+            <td>{{ line.unit_name }}</td>
+            <td class="r">
+              <input
+                #box
+                class="till-input w-qty"
+                [id]="'count-' + line.id"
+                type="text"
+                inputmode="decimal"
+                placeholder="—"
+                [value]="e.saved"
+                [class.bad]="e.state === 'failed'"
+                [attr.aria-label]="'Counted, ' + line.product_code"
+                (change)="commit(line, box)"
+                (keydown.enter)="next($event, line)"
+              />
+              @switch (e.state) {
+                @case ('saving') {
+                  <span class="entry-state">Saving…</span>
+                }
+                @case ('saved') {
+                  <span class="entry-state saved">Saved</span>
+                }
+                @case ('failed') {
+                  <span class="entry-state failed" role="alert">{{ e.message }}</span>
+                }
+              }
+            </td>
+          </tr>
+        } @empty {
+          <tr>
+            <td colspan="4" class="muted">No line matches.</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+} @else {
+  <div class="lines-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Product</th>
+          <th>Shelf</th>
+          <th class="r">Counted</th>
+          <th class="r">Expected</th>
+          <th class="r">Difference</th>
+          <th class="r">Unit cost</th>
+          <th class="r">Value</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (line of d.lines; track line.id) {
+          <tr>
+            <td>
+              {{ line.product_name }}
+              <span class="cell-sub num">{{ line.product_code }}</span>
+            </td>
+            <td class="num">{{ line.shelf_location || '—' }}</td>
+            @if (line.counted_qty === null) {
+              <td class="r muted" colspan="5">Not counted — skipped</td>
+            } @else {
+              <td class="r num">{{ line.counted_qty | qty }}</td>
+              <td class="r num">{{ line.expected_qty | qty }}</td>
+              <td
+                class="r num"
+                [class.neg]="sign(line.difference) < 0"
+                [class.pos]="sign(line.difference) > 0"
+              >
+                {{ line.difference | qty }}
+              </td>
+              <td class="r num">{{ line.unit_cost | usd: 4 }}</td>
+              <td class="r num" [class.neg]="line.value?.startsWith('-')">
+                {{ line.value | usd }}
+              </td>
+            }
+          </tr>
+        }
+      </tbody>
+      <tfoot>
+        <tr>
+          <td colspan="6">
+            {{ d.lines_counted }} of {{ d.lines_total }} counted
+            @if (d.differences !== null) {
+              · {{ d.differences }} {{ d.differences === 1 ? 'difference' : 'differences' }}
+            }
+          </td>
+          <td class="r num" [class.neg]="d.total?.startsWith('-')">{{ d.total | usd }}</td>
+        </tr>
+      </tfoot>
+    </table>
+  </div>
+}
+
+<div class="form">
+  @if (counting()) {
+    <div class="form-grid one">
+      <div class="field">
+        <span class="hint">
+          A blank line is not counted as zero. Lines left empty are skipped, not written down to
+          nothing. Type 0 for a product that is really not on the shelf.
+        </span>
+      </div>
+    </div>
+  }
+  @for (message of errors(); track $index) {
+    <p class="form-error" role="alert">{{ message }}</p>
+  }
+</div>
+<div class="form-foot">
+  @if (counting()) {
+    <button class="btn" type="button" [disabled]="busy() || saving()" (click)="post()">
+      Post differences
+    </button>
+    <button class="btn ghost" type="button" (click)="close()">Close</button>
+    @if (busy() || saving()) {
+      <span class="muted" role="status">Saving…</span>
+    }
+    <div class="spacer"></div>
+    <button class="btn danger" type="button" [disabled]="busy()" (click)="abandon()">
+      Abandon count
+    </button>
+  } @else {
+    <button class="btn ghost" type="button" (click)="close()">Close</button>
+    @if (reversible()) {
+      <div class="spacer"></div>
+      <button class="btn danger" type="button" [disabled]="busy()" (click)="reverse()">
+        Reverse…
+      </button>
+    }
+  }
+</div>

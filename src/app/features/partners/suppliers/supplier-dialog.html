@@ -1,0 +1,172 @@
+<!-- v1.0.0 -->
+<form [formGroup]="form" (ngSubmit)="save()" novalidate>
+  <div class="modal-head">
+    <h3 id="supplier-title">{{ supplier ? 'Edit ' + supplier.name : 'Add supplier' }}</h3>
+    <div class="spacer"></div>
+    <button type="button" class="modal-x" aria-label="Close" (click)="ref.close()">&times;</button>
+  </div>
+  <div class="form">
+    <div class="form-grid">
+      <div class="form-sec">Core</div>
+      <div class="field">
+        <label for="s-code">Code</label>
+        <input id="s-code" type="text" formControlName="code" placeholder="SUP-000006" />
+        <span class="hint">Leave blank to let the system number it.</span>
+        @for (message of errorsFor('code'); track $index) {
+          <span class="hint warn">{{ message }}</span>
+        }
+      </div>
+      <div class="field">
+        <label for="s-type">Type</label>
+        <select id="s-type" formControlName="supplier_type">
+          <option [ngValue]="null" disabled>Choose a type…</option>
+          @for (option of types; track option.value) {
+            <option [ngValue]="option.value">{{ option.label }}</option>
+          }
+        </select>
+        @if (invalid('supplier_type')) {
+          <span class="hint warn">Choose what kind of supplier this is.</span>
+        }
+        @for (message of errorsFor('supplier_type'); track $index) {
+          <span class="hint warn">{{ message }}</span>
+        }
+      </div>
+      <div class="field wide">
+        <label for="s-name">Name</label>
+        <input
+          id="s-name"
+          type="text"
+          formControlName="name"
+          placeholder="Total Tools (Cambodia) Co., Ltd"
+          cdkFocusInitial
+        />
+        <span class="hint">The full legal name, as it appears on their invoice.</span>
+        @if (invalid('name')) {
+          <span class="hint warn">Enter a name of up to 150 characters.</span>
+        }
+        @for (message of errorsFor('name'); track $index) {
+          <span class="hint warn">{{ message }}</span>
+        }
+      </div>
+      <div class="field">
+        <label for="s-kh">Name in Khmer</label>
+        <input id="s-kh" type="text" formControlName="name_kh" lang="km" />
+      </div>
+      <div class="field">
+        <label for="s-short">Short name</label>
+        <input id="s-short" type="text" formControlName="short_name" placeholder="Total Tools" />
+        <span class="hint">Used in dropdowns and reports.</span>
+      </div>
+      <div class="field">
+        <label for="s-logo">Logo</label>
+        <app-image-field
+          inputId="s-logo"
+          [current]="supplier?.logo"
+          [choice]="logo()"
+          (choiceChange)="pickLogo($event)"
+        />
+        @for (message of errorsFor('logo'); track $index) {
+          <span class="hint warn">{{ message }}</span>
+        }
+      </div>
+      <div class="field">
+        <label for="s-order">Display order</label>
+        <input id="s-order" type="number" formControlName="display_order" />
+      </div>
+      <div class="field wide">
+        <label class="check">
+          <input type="checkbox" formControlName="is_active" />
+          <span>Active — can be chosen on a stock-in</span>
+        </label>
+        <span class="hint"
+          >Turning this off hides the supplier from new purchases. Past stock-ins keep it.</span
+        >
+      </div>
+
+      <div class="form-sec gap">Contact</div>
+      <div class="field">
+        <label for="s-contact">Contact person</label>
+        <input id="s-contact" type="text" formControlName="contact_person" />
+      </div>
+      <div class="field">
+        <label for="s-position">Position</label>
+        <input id="s-position" type="text" formControlName="position" />
+      </div>
+      <div class="field">
+        <label for="s-phone">Phone</label>
+        <input id="s-phone" type="text" inputmode="tel" formControlName="phone" />
+      </div>
+      <div class="field">
+        <label for="s-phone2">Second phone</label>
+        <input id="s-phone2" type="text" inputmode="tel" formControlName="phone_alt" />
+      </div>
+      <div class="field">
+        <label for="s-telegram">Telegram</label>
+        <input id="s-telegram" type="text" formControlName="telegram" placeholder="@username" />
+        <span class="hint">Most ordering happens here.</span>
+      </div>
+      <div class="field">
+        <label for="s-email">Email</label>
+        <input id="s-email" type="text" inputmode="email" formControlName="email" />
+        @if (invalid('email')) {
+          <span class="hint warn">Enter an email address, or leave it empty.</span>
+        }
+        @for (message of errorsFor('email'); track $index) {
+          <span class="hint warn">{{ message }}</span>
+        }
+      </div>
+      <div class="field wide">
+        <label for="s-website">Website</label>
+        <input id="s-website" type="text" inputmode="url" formControlName="website" />
+      </div>
+
+      <div class="form-sec gap">Address</div>
+      <div class="field wide">
+        <label for="s-address">Address</label>
+        <input
+          id="s-address"
+          type="text"
+          formControlName="address"
+          placeholder="No. 42, Street 271"
+        />
+      </div>
+      <div class="field">
+        <label for="s-district">District / Khan</label>
+        <input id="s-district" type="text" formControlName="district" />
+      </div>
+      <div class="field">
+        <label for="s-province">Province</label>
+        <input id="s-province" type="text" formControlName="province" />
+      </div>
+      <div class="field">
+        <label for="s-country">Country</label>
+        <input id="s-country" type="text" formControlName="country" />
+      </div>
+
+      <div class="form-sec gap">Notes</div>
+      <div class="field wide">
+        <label for="s-notes">Notes</label>
+        <textarea
+          id="s-notes"
+          formControlName="notes"
+          placeholder="Delivery days, minimum order, anything the buyer should remember"
+        ></textarea>
+      </div>
+    </div>
+    @for (message of formErrors(); track $index) {
+      <p class="form-error" role="alert">{{ message }}</p>
+    }
+  </div>
+  <div class="form-foot">
+    <button class="btn" type="submit" [disabled]="busy()">
+      {{ busy() ? 'Saving…' : 'Save supplier' }}
+    </button>
+    <button class="btn ghost" type="button" (click)="ref.close()">Cancel</button>
+    @if (supplier && supplier.is_active !== false) {
+      <div class="spacer"></div>
+      <button class="btn danger" type="button" [disabled]="busy()" (click)="deactivate()">
+        Deactivate
+      </button>
+    }
+  </div>
+</form>

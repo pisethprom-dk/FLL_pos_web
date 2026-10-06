@@ -1,0 +1,134 @@
+<!-- v1.0.0 -->
+<div class="modal-head">
+  <h3 id="import-title">Import a product list into {{ data.number }}</h3>
+  <div class="spacer"></div>
+  <button type="button" class="modal-x" aria-label="Close" (click)="ref.close()">&times;</button>
+</div>
+<div class="form">
+  <div class="form-grid">
+    <div class="field wide">
+      <label for="import-file">File</label>
+      <input
+        #picker
+        id="import-file"
+        type="file"
+        accept=".csv,.xlsx"
+        (change)="pickFile(picker)"
+        cdkFocusInitial
+      />
+      <span class="hint">
+        @if (data.kind === 'stock-in') {
+          CSV or Excel. Columns: product code, quantity, unit cost; pack size and pack unit are
+          optional. With a pack size, quantity is the number of packs and unit cost the cost of one
+          pack. Without one, the supplier's usual pack is used.
+        } @else if (data.needsCost) {
+          CSV or Excel. Columns: product code, quantity, unit cost.
+        } @else {
+          CSV or Excel. Columns: product code, quantity. A cost column is ignored — an adjustment
+          goes at the current average.
+        }
+      </span>
+    </div>
+    <div class="field wide">
+      <label class="check">
+        <input
+          #header
+          type="checkbox"
+          [checked]="hasHeader()"
+          (change)="setHeader(header.checked)"
+        />
+        <span>First row is a header</span>
+      </label>
+      <span class="hint"
+        >With a header the columns may be in any order; without one, in the order above.</span
+      >
+    </div>
+    @if (data.hasLines) {
+      <div class="field wide">
+        <label class="check">
+          <input #adding type="checkbox" [checked]="add()" (change)="setAdd(adding.checked)" />
+          <span>Add to the lines already on this document</span>
+        </label>
+        <span class="hint">Off replaces them.</span>
+      </div>
+    }
+  </div>
+
+  @if (checked(); as result) {
+    <div class="form-sec gap" style="margin-bottom: 12px">Check before importing</div>
+    <div class="lines-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Row</th>
+            <th>Code</th>
+            <th>Product</th>
+            <th class="r">Qty</th>
+            @if (data.needsCost) {
+              <th class="r">Unit cost</th>
+            }
+            <th>Result</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (row of result.rows; track row.row) {
+            <tr>
+              <td class="num">{{ row.row }}</td>
+              <td class="num nowrap">{{ row.code || '—' }}</td>
+              <td [class.muted]="!row.product">{{ row.product_name || 'not found' }}</td>
+              <td class="r num">{{ row.quantity | qty }}</td>
+              @if (data.needsCost) {
+                <td class="r num">{{ row.unit_cost | usd: costPlaces(row.unit_cost) }}</td>
+              }
+              <td>
+                <span
+                  class="pill"
+                  [class.ok]="row.result === 'Matched'"
+                  [class.low]="row.result !== 'Matched'"
+                  >{{ row.result }}</span
+                >
+              </td>
+            </tr>
+          } @empty {
+            <tr>
+              <td [attr.colspan]="data.needsCost ? 6 : 5" class="muted">The file has no rows.</td>
+            </tr>
+          }
+        </tbody>
+        <tfoot>
+          <tr>
+            <td [attr.colspan]="data.needsCost ? 6 : 5">
+              {{ result.rows.length }} {{ result.rows.length === 1 ? 'row' : 'rows' }} ·
+              {{ result.ready }} ready, {{ result.to_fix }} to fix
+            </td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+    @if (result.to_fix > 0) {
+      <div class="form-grid one" style="margin-top: 12px">
+        <div class="field">
+          <span class="hint">
+            Rows with a problem are not imported. Fix the file and load it again, or add those
+            products by hand.
+          </span>
+        </div>
+      </div>
+    }
+  }
+  @for (message of errors(); track $index) {
+    <p class="form-error" role="alert">{{ message }}</p>
+  }
+</div>
+<div class="form-foot">
+  @if (checked()) {
+    <button class="btn" type="button" [disabled]="busy() || ready() === 0" (click)="importRows()">
+      {{ busy() ? 'Importing…' : 'Import ' + ready() + (ready() === 1 ? ' row' : ' rows') }}
+    </button>
+  } @else {
+    <button class="btn" type="button" [disabled]="busy() || !file()" (click)="check()">
+      {{ busy() ? 'Checking…' : 'Check the file' }}
+    </button>
+  }
+  <button class="btn ghost" type="button" (click)="ref.close()">Cancel</button>
+</div>

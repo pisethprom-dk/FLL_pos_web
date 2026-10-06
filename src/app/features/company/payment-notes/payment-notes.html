@@ -1,0 +1,110 @@
+<!-- v1.0.0 -->
+<div class="page">
+  <p class="page-intro">
+    Text and images printed at the foot of an invoice to tell the customer how to pay. These are
+    notes only — how a sale was actually settled is recorded on the sale itself.
+  </p>
+
+  <div class="filters" *hasScope="'company.edit'">
+    <button class="btn" type="button" (click)="add()">Add note</button>
+  </div>
+
+  @if (notes.error(); as error) {
+    <app-load-error [error]="error" (retry)="notes.reload()" />
+  } @else if (notes.hasValue()) {
+    <div class="grid2">
+      <div class="panel">
+        <div class="panel-head"><h3>Payment notes</h3></div>
+        <table>
+          <thead>
+            <tr>
+              <th class="r">Order</th>
+              <th>Type</th>
+              <th>Information</th>
+              <th>Image</th>
+              <th>Status</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (note of list(); track note.id) {
+              <tr>
+                <td class="r num">{{ note.row_order }}</td>
+                <td>{{ note.payment_type }}</td>
+                <td class="keep-lines">{{ note.payment_info }}</td>
+                <td>
+                  @if (note.image) {
+                    <img class="thumb" [src]="note.image" [alt]="note.payment_type + ' image'" />
+                  } @else {
+                    <span class="muted">—</span>
+                  }
+                </td>
+                <td>
+                  @if (note.is_active === false) {
+                    <span class="pill credit">Hidden</span>
+                  } @else {
+                    <span class="pill ok">Shown</span>
+                  }
+                </td>
+                <td class="r">
+                  <button
+                    *hasScope="'company.edit'"
+                    type="button"
+                    class="rowlink"
+                    (click)="edit(note)"
+                  >
+                    Edit
+                  </button>
+                </td>
+              </tr>
+            } @empty {
+              <tr>
+                <td colspan="6" class="muted">No payment notes yet.</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+        <div class="panel-note">
+          Hiding a note removes it from new invoices. Invoices already printed are unaffected.
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head"><h3>How it prints</h3></div>
+        <div class="panel-body">
+          <div class="print-preview">
+            <div class="shop">{{ profile()?.name }}</div>
+            @if (profile()?.address; as address) {
+              <div class="addr">{{ address }}</div>
+            }
+            <div class="body">Invoice lines and totals</div>
+            @if (shown().length) {
+              <div class="how">
+                <h5>How to pay</h5>
+                @for (note of shown(); track note.id) {
+                  <div class="way">
+                    @if (note.image) {
+                      <img [src]="note.image" alt="" />
+                    }
+                    <div>
+                      <b>{{ note.payment_type }}</b>
+                      @if (note.payment_info) {
+                        <div class="keep-lines">{{ note.payment_info }}</div>
+                      }
+                    </div>
+                  </div>
+                }
+              </div>
+            }
+            @if (profile()?.receipt_footer; as footer) {
+              <div class="foot keep-lines">{{ footer }}</div>
+            }
+          </div>
+          <p class="preview-note">Notes print in row order; hidden ones are left out.</p>
+        </div>
+      </div>
+    </div>
+  } @else {
+    <p class="loading">Loading…</p>
+  }
+</div>

@@ -1,0 +1,7 @@
+<!-- v1.0.0 -->
+<div class="note" role="alert">
+  @for (message of messages(); track $index) {
+    {{ message }}
+  }
+  <button type="button" class="linkish" (click)="retry.emit()">Try again</button>
+</div>

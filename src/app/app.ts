@@ -1,12 +1,10 @@
-import { Component, signal } from '@angular/core';
+// v1.0.0 — the root: everything is a route.
+import { Component } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 
 @Component({
   imports: [RouterOutlet],
   selector: 'app-root',
-  styleUrl: './app.scss',
   templateUrl: './app.html',
 })
-export class App {
-  protected readonly title = signal('pos_frontend');
-}
+export class App {}

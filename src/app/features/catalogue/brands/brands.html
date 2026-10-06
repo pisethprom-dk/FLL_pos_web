@@ -1,0 +1,79 @@
+<!-- v1.0.0 -->
+<div class="page">
+  <p class="page-intro">
+    Customers ask for tools by brand, so it is a record of its own rather than text typed onto each
+    product.
+  </p>
+
+  <div class="filters">
+    <input
+      type="search"
+      aria-label="Search brands"
+      placeholder="Search brand or country"
+      [value]="search()"
+      (input)="search.set($any($event.target).value)"
+    />
+    <button *hasScope="'catalogue.edit'" class="btn" type="button" (click)="open(null)">
+      Add brand
+    </button>
+  </div>
+
+  @if (brands.error(); as error) {
+    <app-load-error [error]="error" (retry)="brands.reload()" />
+  } @else if (brands.hasValue()) {
+    <div class="panel">
+      <div class="panel-head"><h3>Brands</h3></div>
+      <table>
+        <thead>
+          <tr>
+            <th>Brand</th>
+            <th>Country</th>
+            <th class="r">Order</th>
+            <th>Status</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (brand of rows(); track brand.id) {
+            <tr>
+              <td>
+                <div class="with-thumb">
+                  @if (brand.logo) {
+                    <img class="thumb" [src]="brand.logo" alt="" />
+                  }
+                  <div>
+                    {{ brand.name }}
+                    @if (brand.name_kh) {
+                      <span class="cell-sub" lang="km">{{ brand.name_kh }}</span>
+                    }
+                  </div>
+                </div>
+              </td>
+              <td>{{ brand.country || '—' }}</td>
+              <td class="r num">{{ brand.display_order }}</td>
+              <td>
+                @if (brand.is_active === false) {
+                  <span class="pill credit">Inactive</span>
+                } @else {
+                  <span class="pill ok">Active</span>
+                }
+              </td>
+              <td class="r">
+                @if (canEdit) {
+                  <button type="button" class="rowlink" (click)="open(brand)">Edit</button>
+                }
+              </td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="5" class="muted">No brand matches "{{ search() }}".</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+      <div class="panel-note">{{ brands.value().length }} brands · {{ activeCount() }} active</div>
+    </div>
+  } @else {
+    <p class="loading">Loading…</p>
+  }
+</div>

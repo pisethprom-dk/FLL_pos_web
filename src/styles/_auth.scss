@@ -1,0 +1,60 @@
+// v2.1.0 — sign-in and change-password: design A, "Workbench" (agreed
+// 2026-10-05). The shop on the sidebar's colour over a pegboard pattern, like
+// the tool wall behind the counter; the form on paper like every other screen.
+// Changed in 2.1: the shop's colours (option A) and its logo beside the name.
+.signin{display:grid;grid-template-columns:minmax(0,44fr) minmax(0,56fr);min-height:100vh;}
+
+.signin-brand{
+  background-color:var(--side);
+  background-image:radial-gradient(circle,rgba(255,255,255,.075) 0 1.6px,transparent 2px);
+  background-size:20px 20px;
+  color:var(--side-text);display:flex;flex-direction:column;padding:40px 44px;
+}
+.signin-eyebrow{margin:0;font-size:11px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--brand-yellow);}
+.signin-shop{margin-top:auto;min-height:96px;display:flex;flex-direction:column;justify-content:flex-end;gap:10px;}
+.signin-id{display:flex;align-items:center;gap:16px;}
+// The logo, cropped to a circle around its ring.
+.signin-logo{width:72px;height:72px;border-radius:50%;object-fit:cover;flex:0 0 auto;}
+.signin-names{display:flex;flex-direction:column;gap:4px;min-width:0;}
+.signin-name{margin:0;font-size:34px;font-weight:600;line-height:1.1;color:#fff;letter-spacing:-.01em;text-wrap:balance;}
+.signin-name-kh{margin:0;font-family:"Noto Sans Khmer","IBM Plex Sans",sans-serif;font-size:17px;line-height:1.6;color:var(--side-text);}
+.signin-addr{margin:0;font-size:13px;color:var(--side-muted);}
+.signin-rule{height:3px;width:44px;background:var(--brand-yellow);margin:22px 0 14px;}
+.signin-areas{list-style:none;margin:0;padding:0;display:flex;flex-wrap:wrap;gap:8px;font-size:12px;}
+.signin-areas li{border:1px solid rgba(255,255,255,.2);border-radius:999px;padding:3px 11px;}
+.signin-foot{margin:auto 0 0;font-size:12px;color:var(--side-muted);}
+
+.signin-main{background:var(--paper);display:grid;place-items:center;padding:40px 24px;}
+.signin-col{width:100%;max-width:380px;}
+.signin-title{margin:0;font-size:26px;font-weight:600;letter-spacing:-.01em;}
+.signin-sub{margin:4px 0 24px;font-size:14px;color:var(--muted);}
+.signin-col .note{margin:0 0 20px;}
+.signin-form{display:grid;gap:16px;}
+.signin-form .form-error{margin:0;}
+// Touch-friendly: about 44px tall, for tills with a touch screen.
+.signin-col .field input[type="text"],.signin-col .field input[type="password"]{height:44px;padding:0 12px;font-size:15px;}
+.signin-col .field input:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px rgba(0,114,122,.22);}
+.signin-btn{height:44px;width:100%;font-size:15px;font-weight:600;}
+.signin-actions{display:flex;gap:10px;}
+.signin-actions .signin-btn{flex:1;width:auto;}
+.signin-actions .btn.ghost{height:44px;padding:0 18px;}
+.signin-help{margin:20px 0 0;font-size:13px;color:var(--muted);}
+.signin-help b{font-weight:600;color:var(--ink-soft);}
+
+// The Show/Hide button sits inside the password input's right edge.
+app-password-field{display:flex;flex-direction:column;gap:5px;}
+.pw-field{position:relative;}
+.field .pw-field input[type]{padding-right:64px;}
+.pw-toggle{position:absolute;right:6px;top:50%;transform:translateY(-50%);background:none;border:0;cursor:pointer;
+  padding:6px 8px;border-radius:var(--radius);font-size:12.5px;font-weight:600;color:var(--primary);}
+.pw-toggle:hover{text-decoration:underline;}
+
+@media (max-width:760px){
+  .signin{grid-template-columns:1fr;grid-template-rows:auto 1fr;}
+  .signin-brand{padding:28px 20px 24px;}
+  .signin-shop{margin-top:14px;min-height:0;}
+  .signin-logo{width:52px;height:52px;}
+  .signin-name{font-size:26px;}
+  .signin-rule,.signin-areas,.signin-foot{display:none;}
+  .signin-main{place-items:start center;padding:28px 16px 40px;}
+}

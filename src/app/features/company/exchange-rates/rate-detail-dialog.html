@@ -1,0 +1,59 @@
+<!-- v1.0.0 -->
+<div class="modal-head">
+  <h3 id="rate-detail-title">Rate from {{ rate.effective_date | date: 'd MMM y' }}</h3>
+  <div class="spacer"></div>
+  <button type="button" class="modal-x" aria-label="Close" (click)="ref.close()">&times;</button>
+</div>
+<div class="form">
+  @if (rate.is_in_use) {
+    <p class="note">
+      This rate has sales recorded against it, so it cannot be changed. Correct it by setting a new
+      rate with a later effective date.
+    </p>
+  }
+  <div class="form-grid">
+    <div class="field">
+      <label for="detail-from">From currency</label>
+      <input id="detail-from" type="text" value="USD" readonly />
+    </div>
+    <div class="field">
+      <label for="detail-to">To currency</label>
+      <input id="detail-to" type="text" value="KHR" readonly />
+    </div>
+    <div class="field">
+      <label for="detail-date">Effective from</label>
+      <input
+        id="detail-date"
+        type="text"
+        [value]="rate.effective_date | date: 'd MMM y'"
+        readonly
+      />
+    </div>
+    <div class="field">
+      <label for="detail-rate">Rate</label>
+      <input id="detail-rate" type="text" [value]="rate.rate | rate" readonly />
+    </div>
+    <div class="field wide">
+      <label for="detail-by">Set by</label>
+      <input
+        id="detail-by"
+        type="text"
+        [value]="(rate.set_by || 'The system') + ' · ' + (rate.created_at | date: 'd MMM y HH:mm')"
+        readonly
+      />
+    </div>
+    @if (rate.note) {
+      <div class="field wide">
+        <label for="detail-note">Note</label>
+        <textarea id="detail-note" [value]="rate.note" readonly></textarea>
+      </div>
+    }
+  </div>
+</div>
+<div class="form-foot">
+  <button type="button" class="btn ghost" cdkFocusInitial (click)="ref.close()">Close</button>
+  <div class="spacer"></div>
+  @if (canEdit) {
+    <button type="button" class="btn" (click)="ref.close('new')">Set a new rate instead</button>
+  }
+</div>

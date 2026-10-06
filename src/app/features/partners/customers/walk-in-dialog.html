@@ -1,0 +1,33 @@
+<!-- v1.0.0 -->
+<div class="modal-head">
+  <h3 id="walk-in-title">{{ customer.name }}</h3>
+  <div class="spacer"></div>
+  <button type="button" class="modal-x" aria-label="Close" (click)="ref.close()">&times;</button>
+</div>
+<div class="form">
+  <p class="note">
+    This is a system record. Every sale without a named customer is recorded against it, so it
+    cannot be renamed, given credit, or deactivated.
+  </p>
+  <div class="form-grid">
+    <div class="field">
+      <label for="walk-in-code">Code</label>
+      <input id="walk-in-code" type="text" [value]="customer.code" readonly />
+    </div>
+    <div class="field">
+      <label for="walk-in-name">Name</label>
+      <input id="walk-in-name" type="text" [value]="customer.name" readonly />
+    </div>
+    <div class="field">
+      <label for="walk-in-price">Price</label>
+      <input id="walk-in-price" type="text" value="Retail" readonly />
+    </div>
+    <div class="field">
+      <label for="walk-in-credit">Credit</label>
+      <input id="walk-in-credit" type="text" value="Never" readonly />
+    </div>
+  </div>
+</div>
+<div class="form-foot">
+  <button type="button" class="btn ghost" cdkFocusInitial (click)="ref.close()">Close</button>
+</div>

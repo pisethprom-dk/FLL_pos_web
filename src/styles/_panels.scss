@@ -1,0 +1,31 @@
+// v1.2.0 — panels, two-column grids, notes and placeholders.
+// Changed: .linkish in brand teal (option A).
+.grid2{display:grid;grid-template-columns:1.25fr 1fr;gap:20px;margin-bottom:20px;}
+.grid2.even{grid-template-columns:1fr 1fr;}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);}
+.panel-head{
+  padding:13px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:12px;
+}
+.panel-head h3{margin:0;font-size:14px;font-weight:600;}
+.panel-head .spacer{flex:1;}
+.linkish{background:none;border:0;padding:0;cursor:pointer;color:var(--primary);font-size:12.5px;font-weight:500;text-decoration:underline;text-underline-offset:2px;}
+.panel-body{padding:18px;}
+
+.note{
+  background:var(--khr-bg);border:1px solid #E8D6AE;border-radius:var(--radius);
+  padding:12px 16px;font-size:13px;color:#6B4C13;margin-bottom:20px;
+}
+.placeholder{
+  background:var(--surface);border:1px dashed var(--line-strong);border-radius:var(--radius);
+  padding:48px 28px;text-align:center;color:var(--muted);
+}
+.placeholder b{display:block;color:var(--ink);font-size:16px;margin-bottom:6px;font-weight:600;}
+
+@media (max-width:1000px){
+  .grid2,.grid2.even{grid-template-columns:1fr;}
+}
+
+// Added: the muted footnote the mockup wrote inline under many panels, and the
+// line a panel shows while its data loads.
+.panel-note{padding:18px;border-top:1px solid var(--line);color:var(--muted);font-size:12.5px;}
+.loading{padding:18px;color:var(--muted);font-size:13px;}

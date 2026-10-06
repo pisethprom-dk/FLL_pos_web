@@ -1,0 +1,69 @@
+<!-- v1.0.0 -->
+<div class="page">
+  <p class="page-intro">
+    How products are counted and sold: piece, set, box of 100, metre. A unit stays on the products
+    and documents that use it; switch it off to stop offering it.
+  </p>
+
+  <div class="filters">
+    <input
+      type="search"
+      aria-label="Search units"
+      placeholder="Search code or name"
+      [value]="search()"
+      (input)="search.set($any($event.target).value)"
+    />
+    <button *hasScope="'catalogue.edit'" class="btn" type="button" (click)="open(null)">
+      Add unit
+    </button>
+  </div>
+
+  @if (units.error(); as error) {
+    <app-load-error [error]="error" (retry)="units.reload()" />
+  } @else if (units.hasValue()) {
+    <div class="panel">
+      <div class="panel-head"><h3>Units</h3></div>
+      <table>
+        <thead>
+          <tr>
+            <th>Code</th>
+            <th>Name</th>
+            <th>Name in Khmer</th>
+            <th class="r">Order</th>
+            <th>Status</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (unit of rows(); track unit.id) {
+            <tr>
+              <td class="num nowrap">{{ unit.code }}</td>
+              <td>{{ unit.name }}</td>
+              <td lang="km">{{ unit.name_kh || '—' }}</td>
+              <td class="r num">{{ unit.display_order }}</td>
+              <td>
+                @if (unit.is_active === false) {
+                  <span class="pill credit">Inactive</span>
+                } @else {
+                  <span class="pill ok">Active</span>
+                }
+              </td>
+              <td class="r">
+                @if (canEdit) {
+                  <button type="button" class="rowlink" (click)="open(unit)">Edit</button>
+                }
+              </td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="6" class="muted">No unit matches "{{ search() }}".</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+      <div class="panel-note">{{ units.value().length }} units · {{ activeCount() }} active</div>
+    </div>
+  } @else {
+    <p class="loading">Loading…</p>
+  }
+</div>

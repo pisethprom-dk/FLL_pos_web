@@ -1,0 +1,73 @@
+// v1.2.0 — sidebar, top bar and the page frame.
+// Changed: the sidebar takes the shop's colours (option A, agreed 2026-10-05) —
+// deep teal, with the active screen in brand yellow. See _tokens.scss.
+// Changed: the brand block shows logo and name only, no address (owner's choice).
+.shell{display:flex;min-height:100vh;}
+.side{
+  width:216px;flex:0 0 216px;background:var(--side);color:var(--side-text);
+  display:flex;flex-direction:column;position:sticky;top:0;height:100vh;
+}
+.brand{padding:20px 20px 18px;border-bottom:1px solid rgba(255,255,255,.1);display:flex;align-items:center;gap:10px;}
+// Added: the shop's logo, cropped to a circle around its ring.
+.brand img{width:36px;height:36px;border-radius:50%;object-fit:cover;flex:0 0 auto;}
+.brand b{display:block;min-width:0;color:#fff;font-size:15px;font-weight:600;letter-spacing:.01em;}
+.nav{padding:12px 10px;overflow-y:auto;flex:1;}
+.nav h4{
+  margin:14px 10px 6px;font-size:11px;font-weight:600;color:var(--side-muted);letter-spacing:.04em;
+}
+// Changed: the mockup's menu was all buttons. Here a screen is a link, a group
+// is a button, and a screen not built yet is a span.
+.nav a,.nav button,.nav .soon{
+  display:block;width:100%;text-align:left;background:none;border:0;cursor:pointer;
+  padding:7px 10px;border-radius:var(--radius);color:var(--side-text);font-size:13.5px;
+  text-decoration:none;
+}
+.nav a:hover,.nav button:hover{background:rgba(255,255,255,.08);color:#fff;}
+.nav a[aria-current="page"]{background:var(--brand-yellow);color:var(--ink);font-weight:600;}
+.nav .soon{color:var(--side-dim);cursor:not-allowed;}
+.nav button.grp{display:flex;align-items:center;justify-content:space-between;gap:8px;}
+.nav .caret{font-size:9px;color:var(--side-muted);transition:transform .15s ease;}
+.nav button.grp[aria-expanded="false"] .caret{transform:rotate(-90deg);}
+.nav button.grp.has-active{color:#fff;font-weight:600;}
+.nav .sub{margin:2px 0 6px 14px;padding-left:10px;border-left:1px solid rgba(255,255,255,.14);}
+.nav .sub[hidden]{display:none;}
+.nav .sub a,.nav .sub .soon{font-size:13px;padding:6px 10px;}
+.side-foot{padding:14px 20px;border-top:1px solid rgba(255,255,255,.1);font-size:12px;color:var(--side-muted);}
+.side-foot b{color:#fff;display:block;font-weight:500;}
+// Added: the mockup's footer had no actions.
+.side-foot .foot-links{display:flex;gap:12px;flex-wrap:wrap;margin-top:8px;}
+.side-foot .foot-links a,.side-foot .foot-links button{
+  background:none;border:0;padding:0;cursor:pointer;color:var(--side-text);font-size:12px;
+  text-decoration:underline;text-underline-offset:2px;
+}
+.side-foot .foot-links a:hover,.side-foot .foot-links button:hover{color:#fff;}
+
+.main{flex:1;min-width:0;display:flex;flex-direction:column;}
+
+.top{
+  background:var(--surface);border-bottom:1px solid var(--line);
+  padding:12px 28px;display:flex;align-items:center;gap:24px;flex-wrap:wrap;
+}
+.top h1{margin:0;font-size:17px;font-weight:600;}
+.top .spacer{flex:1;}
+.chip{
+  display:inline-flex;align-items:center;gap:7px;font-size:12.5px;color:var(--muted);
+  border:1px solid var(--line);border-radius:var(--radius);padding:5px 10px;background:var(--paper);
+}
+.chip b{color:var(--ink);font-weight:600;}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--good);flex:0 0 auto;}
+
+.page{padding:24px 28px 56px;max-width:1240px;}
+.page-intro{margin:0 0 20px;color:var(--muted);max-width:68ch;}
+
+@media (max-width:760px){
+  .shell{flex-direction:column;}
+  .side{width:100%;flex:none;height:auto;position:static;}
+  .nav{display:flex;flex-wrap:wrap;gap:4px;}
+  .nav h4{width:100%;}
+  .nav a,.nav button,.nav .soon{width:auto;}
+  .nav .sub{width:100%;display:flex;flex-wrap:wrap;gap:4px;margin:0 0 6px;padding-left:0;border-left:0;}
+  // Changed: the mockup hid the footer here. It now holds Sign out, so it stays.
+  .page{padding:18px 16px 40px;}
+  .top{padding:12px 16px;}
+}

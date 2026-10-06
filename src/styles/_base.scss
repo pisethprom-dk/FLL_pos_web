@@ -1,0 +1,22 @@
+// v1.2.0 — page defaults.
+*,*::before,*::after{box-sizing:inherit;}
+html,body{margin:0;padding:0;}
+body{
+  background:var(--paper);
+  color:var(--ink);
+  // Changed: Noto Sans Khmer added, for Khmer names — IBM Plex Sans has no Khmer.
+  font-family:"IBM Plex Sans","Noto Sans Khmer","Segoe UI",system-ui,-apple-system,sans-serif;
+  font-size:14px;
+  line-height:1.5;
+  font-feature-settings:"tnum" 1;
+}
+.num{font-variant-numeric:tabular-nums;}
+a{color:inherit;}
+button{font:inherit;color:inherit;}
+// Changed: the focus ring in brand teal (5.2:1 on paper); it was riel gold.
+:focus-visible{outline:2px solid var(--primary);outline-offset:2px;}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important;}}
+
+// Added: small helpers for what the mockup wrote as inline styles.
+.muted{color:var(--muted);}
+.keep-lines{white-space:pre-line;}

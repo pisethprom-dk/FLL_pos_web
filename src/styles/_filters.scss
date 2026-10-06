@@ -1,0 +1,11 @@
+// v1.1.0 — the filter bar above a list. Changed: buttons in brand teal.
+.filters{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:18px;}
+.filters select,.filters input{
+  font:inherit;padding:6px 10px;border:1px solid var(--line-strong);border-radius:var(--radius);
+  background:var(--surface);color:var(--ink);
+}
+.filters .btn{
+  background:var(--primary);color:#fff;border:0;border-radius:var(--radius);padding:7px 14px;cursor:pointer;font-size:13.5px;font-weight:500;
+}
+.filters .btn:not(.ghost):hover{background:var(--primary-hover);}
+.filters .btn.ghost{background:var(--surface);color:var(--ink);border:1px solid var(--line-strong);}
