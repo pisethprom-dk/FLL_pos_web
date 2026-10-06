@@ -12,6 +12,7 @@ export type { Brand } from './models/brand';
 export type { BrandRequest } from './models/brand-request';
 export type { Category } from './models/category';
 export type { CategoryRequest } from './models/category-request';
+export type { CompanyBrand } from './models/company-brand';
 export type { CompanyProfile } from './models/company-profile';
 export type { CompleteRequest } from './models/complete-request';
 export type { CountEntryRequest } from './models/count-entry-request';

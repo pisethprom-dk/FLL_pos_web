@@ -33,4 +33,5 @@ export interface Adjustment {
    */
   supplier?: number | null;
   supplier_name: string | null;
+  total: string | null;
 }

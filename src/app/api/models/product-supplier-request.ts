@@ -20,6 +20,11 @@ export interface ProductSupplierRequest {
    * Units of the product in the supplier's usual pack.
    */
   pack_size?: string;
+
+  /**
+   * What the supplier's pack is, e.g. Carton. Blank means the product's own unit.
+   */
+  pack_unit?: number | null;
   product: number;
   supplier: number;
 

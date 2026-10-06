@@ -12,5 +12,5 @@ export interface ExchangeRate {
    * Riel per one US dollar.
    */
   rate: string;
-  set_by: string;
+  set_by: string | null;
 }

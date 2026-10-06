@@ -21,6 +21,12 @@ export interface ProductSupplier {
    * Units of the product in the supplier's usual pack.
    */
   pack_size?: string;
+
+  /**
+   * What the supplier's pack is, e.g. Carton. Blank means the product's own unit.
+   */
+  pack_unit?: number | null;
+  pack_unit_name: string | null;
   product: number;
   product_code: string;
   product_name: string;
@@ -32,4 +38,5 @@ export interface ProductSupplier {
    * The supplier's own code for this product.
    */
   supplier_sku?: string;
+  unit_name: string;
 }

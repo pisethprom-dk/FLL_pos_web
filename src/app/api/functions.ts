@@ -85,6 +85,8 @@ export type { CatalogueUnitsPartialUpdate$XWwwFormUrlencoded$Params as Catalogue
 export { catalogueUnitsPartialUpdate$XWwwFormUrlencoded as catalogueUnitsPartialUpdate$XWwwFormUrlencoded } from './fn/catalogue/catalogue-units-partial-update-x-www-form-urlencoded';
 export type { CatalogueUnitsPartialUpdate$FormData$Params as CatalogueUnitsPartialUpdate$FormData$Params } from './fn/catalogue/catalogue-units-partial-update-form-data';
 export { catalogueUnitsPartialUpdate$FormData as catalogueUnitsPartialUpdate$FormData } from './fn/catalogue/catalogue-units-partial-update-form-data';
+export type { CompanyBrandRetrieve$Params as CompanyBrandRetrieve$Params } from './fn/company/company-brand-retrieve';
+export { companyBrandRetrieve as companyBrandRetrieve } from './fn/company/company-brand-retrieve';
 export type { CompanyExchangeRatesList$Params as CompanyExchangeRatesList$Params } from './fn/company/company-exchange-rates-list';
 export { companyExchangeRatesList as companyExchangeRatesList } from './fn/company/company-exchange-rates-list';
 export type { CompanyExchangeRatesCreate$Json$Params as CompanyExchangeRatesCreate$Json$Params } from './fn/company/company-exchange-rates-create-json';

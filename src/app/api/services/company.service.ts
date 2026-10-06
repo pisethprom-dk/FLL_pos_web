@@ -10,6 +10,9 @@ import { BaseService } from '../base-service';
 import { ApiConfiguration } from '../api-configuration';
 import { StrictHttpResponse } from '../strict-http-response';
 
+import { CompanyBrand } from '../models/company-brand';
+import { companyBrandRetrieve } from '../fn/company/company-brand-retrieve';
+import { CompanyBrandRetrieve$Params } from '../fn/company/company-brand-retrieve';
 import { companyExchangeRatesCreate$FormData } from '../fn/company/company-exchange-rates-create-form-data';
 import { CompanyExchangeRatesCreate$FormData$Params } from '../fn/company/company-exchange-rates-create-form-data';
 import { companyExchangeRatesCreate$Json } from '../fn/company/company-exchange-rates-create-json';
@@ -83,6 +86,43 @@ import { PaymentNote } from '../models/payment-note';
 export class CompanyService extends BaseService {
   constructor(config: ApiConfiguration, http: HttpClient) {
     super(config, http);
+  }
+
+  /** Path part for operation `companyBrandRetrieve()` */
+  static readonly CompanyBrandRetrievePath = '/api/company/brand/';
+
+  /**
+   * The shop's name, Khmer name, address and logo for the sign-in page.
+   *
+   * Public and read-only. No authentication runs, so a stale token left in a
+   * browser cannot turn this into a 401 on the page where the user signs in.
+   *
+   * This method provides access to the full `HttpResponse`, allowing access to response headers.
+   * To access only the response body, use `companyBrandRetrieve()` instead.
+   *
+   * This method doesn't expect any request body.
+   */
+  companyBrandRetrieve$Response(params?: CompanyBrandRetrieve$Params, context?: HttpContext): Observable<StrictHttpResponse<CompanyBrand>> {
+    const obs = companyBrandRetrieve(this.http, this.rootUrl, params, context);
+    return obs;
+  }
+
+  /**
+   * The shop's name, Khmer name, address and logo for the sign-in page.
+   *
+   * Public and read-only. No authentication runs, so a stale token left in a
+   * browser cannot turn this into a 401 on the page where the user signs in.
+   *
+   * This method provides access only to the response body.
+   * To access the full response (for headers, for example), `companyBrandRetrieve$Response()` instead.
+   *
+   * This method doesn't expect any request body.
+   */
+  companyBrandRetrieve(params?: CompanyBrandRetrieve$Params, context?: HttpContext): Observable<CompanyBrand> {
+    const resp = this.companyBrandRetrieve$Response(params, context);
+    return resp.pipe(
+      map((r: StrictHttpResponse<CompanyBrand>): CompanyBrand => r.body)
+    );
   }
 
   /** Path part for operation `companyExchangeRatesList()` */

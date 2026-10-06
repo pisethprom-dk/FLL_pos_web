@@ -15,6 +15,7 @@ export interface StockCount {
   category_name: string;
   counted_by?: number | null;
   counted_by_name: string | null;
+  differences: number | null;
   doc_date?: string;
   id: number;
   lines: Array<StockCountLine>;
@@ -29,4 +30,5 @@ export interface StockCount {
   reverses: number | null;
   reverses_number: string | null;
   status: DraftPostedStatusEnum;
+  total: string | null;
 }
