@@ -1,4 +1,4 @@
-// v1.2.0
+// v1.3.0
 import { HttpTestingController } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { RouterTestingHarness } from '@angular/router/testing';
@@ -24,6 +24,7 @@ import {
 } from '../../shared/screen-testing';
 import { BRANDS, BRAND_URL, CATEGORIES, CATEGORY_URL, page } from '../catalogue/catalogue-testing';
 import { QUOTE_URL, QUO_ACCEPTED } from '../quotations/quotations-testing';
+import { DASHBOARD, DASHBOARD_URL } from '../reports/reports-testing';
 import { LOOKUP_URL, answerEach, key } from '../stock/stock-testing';
 import {
   COMPLETED,
@@ -374,7 +375,9 @@ describe('Sell', () => {
     await open();
     await scan('TL-0283', [LEVEL]);
     expect(sessionStorage.getItem('pos-sale')).toContain('TL-0283');
-    await harness.navigateByUrl('/');
+    const away = harness.navigateByUrl('/');
+    await answer(http, DASHBOARD_URL, DASHBOARD);
+    await away;
     const back = harness.navigateByUrl('/sell');
     await answerOpening();
     await back;

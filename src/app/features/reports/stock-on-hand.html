@@ -1,0 +1,159 @@
+<!-- v1.0.3 -->
+<div class="page">
+  <p class="page-intro">
+    Quantity and value at average cost, as at today. Products at or below their reorder level are
+    flagged, and so is stock that has not moved in 90 days.
+  </p>
+
+  <div class="filters">
+    <select aria-label="Show" (change)="setShown($any($event.target).value)">
+      @for (o of shownOptions; track o.value) {
+        <option [value]="o.value" [selected]="shown() === o.value">{{ o.label }}</option>
+      }
+    </select>
+    <select aria-label="Category" (change)="setCategory($any($event.target).value)">
+      <option value="">All categories</option>
+      @for (option of categoryOptions(); track option.id) {
+        <option [value]="option.id" [selected]="category() === option.id">
+          {{ option.label }}
+        </option>
+      }
+    </select>
+    <select aria-label="Brand" (change)="setBrand($any($event.target).value)">
+      <option value="">All brands</option>
+      @for (b of brandOptions(); track b.id) {
+        <option [value]="b.id" [selected]="brand() === b.id">{{ b.name }}</option>
+      }
+    </select>
+    <input
+      type="search"
+      aria-label="Search stock"
+      placeholder="Search code, name or barcode"
+      (input)="type($any($event.target).value)"
+    />
+  </div>
+
+  @if (report.error(); as error) {
+    <app-load-error [error]="error" (retry)="report.reload()" />
+  } @else if (last(); as r) {
+    @let s = r.summary;
+    <div class="tiles" [class.three]="!seesCost" style="margin-bottom: 20px">
+      @if (seesCost) {
+        <div class="tile">
+          <small>Stock value at cost</small>
+          <b class="num">{{ s.value | usd }}</b>
+          <div class="sub">{{ s.products }} products</div>
+        </div>
+      }
+      <div class="tile">
+        <small>Below reorder level</small>
+        <b class="num">{{ s.below_reorder }}</b>
+        <div class="sub" [class.alert]="s.out_of_stock > 0">{{ s.out_of_stock }} out of stock</div>
+      </div>
+      <div class="tile">
+        <small>No movement 90 days</small>
+        <b class="num">{{ s.no_movement }}</b>
+        <div class="sub">
+          {{ seesCost ? (s.no_movement_value | usd) + ' tied up' : 'Holding stock' }}
+        </div>
+      </div>
+      <div class="tile">
+        <small>Last counted</small>
+        @if (s.last_count; as c) {
+          <b class="num">{{ c.date | date: 'd MMM' }}</b>
+          <div class="sub">
+            {{ c.category }} ·
+            {{
+              seesCost
+                ? 'variance ' + (c.value | usd)
+                : c.differences + (c.differences === 1 ? ' line differed' : ' lines differed')
+            }}
+          </div>
+        } @else {
+          <b>—</b>
+          <div class="sub">No count posted yet</div>
+        }
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-head">
+        <h3>Stock on hand — {{ r.as_at | date: 'd MMM y' }}</h3>
+        <div class="spacer"></div>
+        @if (report.isLoading()) {
+          <span class="muted" role="status">Updating…</span>
+        }
+      </div>
+      <div class="report-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Code</th>
+              <th>Product</th>
+              <th>Brand</th>
+              <th>Shelf</th>
+              <th class="r">On hand</th>
+              <th class="r nowrap">Reorder at</th>
+              @if (seesCost) {
+                <th class="r">Avg cost</th>
+                <th class="r">Value</th>
+              }
+              <th>Last moved</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (row of r.rows; track row.product) {
+              @let st = status[row.status];
+              <tr>
+                <td class="num nowrap">{{ row.code }}</td>
+                <td>{{ row.name }}</td>
+                <td>{{ row.brand_name ?? '—' }}</td>
+                <td class="num nowrap">{{ row.shelf_location || '—' }}</td>
+                <td class="r num nowrap" [class.neg]="row.status === 'OUT'">
+                  {{ row.qty_on_hand | qty }} <span class="muted">{{ row.unit_name }}</span>
+                </td>
+                <td class="r num">{{ row.reorder_level | qty }}</td>
+                @if (seesCost) {
+                  <td class="r num">{{ row.avg_cost | usd: costPlaces(row.avg_cost) }}</td>
+                  <td class="r num">{{ row.value | usd }}</td>
+                }
+                <td class="nowrap">
+                  {{ row.last_moved ? (row.last_moved | date: 'd MMM y') : '—' }}
+                </td>
+                <td>
+                  <span [class]="'pill ' + st.tone">{{ st.label }}</span>
+                </td>
+              </tr>
+            } @empty {
+              <tr>
+                <td [attr.colspan]="seesCost ? 10 : 8" class="muted">
+                  No product matches these filters.
+                </td>
+              </tr>
+            }
+          </tbody>
+          @if (r.rows.length) {
+            <tfoot>
+              <tr>
+                <td [attr.colspan]="seesCost ? 7 : 8">
+                  {{ r.rows.length }} {{ r.rows.length === 1 ? 'product' : 'products' }}
+                </td>
+                @if (seesCost) {
+                  <td class="r num">{{ r.rows_value | usd }}</td>
+                  <td colspan="2"></td>
+                }
+              </tr>
+            </tfoot>
+          }
+        </table>
+      </div>
+      <div class="panel-note">
+        Value is quantity × average cost. A retired product still on the shelf stays listed until
+        its stock is gone.
+      </div>
+    </div>
+  } @else {
+    <p class="loading">Loading…</p>
+  }
+</div>

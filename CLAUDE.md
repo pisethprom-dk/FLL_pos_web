@@ -1,4 +1,4 @@
-<!-- v1.4.6 — handover context for Claude Code. Place at the repo root as CLAUDE.md. -->
+<!-- v1.5.0 — handover context for Claude Code. Place at the repo root as CLAUDE.md. -->
 
 # POS frontend — Angular 22
 
@@ -211,6 +211,39 @@ Do not re-litigate these without asking.
   on <the day printed>"; Save and print receipt on Record a payment (the
   payment stands even if printing fails), Print on a saved one (COPY), none
   for a void one.
+- **Reports** (agreed 2026-10-07): one at a time, each its backend endpoint
+  then its screen — Daily sales → Stock on hand → Receivables → Dashboard
+  last. No Export for now.
+- **Daily sales** (built 2026-10-07, step 6a). This month by default, or
+  Today, Last 7 days, or a From–To range; an Admin picks a seller, a Seller
+  sees only their own (the backend holds them to it) and no cost or profit.
+  No tender filter — the By tender table and the Cash / KHQR / Credit
+  columns split every sale. Cash is the sale less KHQR and credit (what
+  stayed in the drawer after change). Returns are shown apart, not taken
+  off.
+- **Stock on hand** (built 2026-10-07, step 6b). As at today only; every
+  matching product on one page; status (out of stock, reorder, no movement,
+  OK — the first that applies), category, brand and a search. "No
+  movement" is fixed at 90 days. The tiles cover all stock whatever the
+  filters; a Seller sees quantities but no cost or value. Retired products
+  still holding stock stay listed. A Last moved column was added.
+- **Receivables** (built 2026-10-07, step 6c). Admin only. A debt is aged
+  by the days since its invoice (0–30, 31–60, 61–90, over 90); only
+  customers who owe are listed; filter all, overdue, over limit, on hold.
+  Open shows the customer's open invoices (from their account) with Paid
+  and Returned apart, and Record a payment opens the payment dialog with
+  that customer already chosen; the report reloads after. No statements,
+  no Export.
+- **Dashboard** (built 2026-10-07, step 6d). The mockup's layout from one
+  call. "Cash in drawer" became **Cash taken today** — cash sales after
+  change, plus cash payments, less cash refunds; not a drawer count (no
+  float, and a refund does not record $ or ៛). A Seller sees their own
+  sales (no profit, cash, money owed or stock value), so their Below
+  reorder joins the to-do tiles in one row of four. Sales by category is
+  today's. Three tiles beyond the mockup link to their screens: held sales
+  (to the Till), quotations sent and not answered (expiring within 7 days,
+  expired), open warranty claims (out of warranty). Recent sales open read
+  only, as from Sales. No auto-refresh, no comparison, no Export.
 
 ---
 
@@ -374,9 +407,24 @@ instead of greying it out.
   `print-common.ts`; `Printer` mounts any of them with its inputs and paper.
 - A printed word goes through `label()` (`print-labels.ts`); a whole phrase
   that reads differently in Khmer (the warranty) gets its own function.
+- A report's figures are the server's; the screen only lays them out (no
+  sums in the browser — the totals row is the summary the API sent).
+- A report's wide table sits in `.report-wrap` (`_tables.scss`): tighter
+  cells, and it scrolls inside its panel, never the page.
+- A dialog that usually starts empty can be given its starting point as
+  optional `DIALOG_DATA` — Record a payment takes a customer that way.
 - Specs spy on `window.print` and read `#print-root` at that moment; the
   live check prints to PDF from headless Chrome (`Page.printToPDF`) at each
   paper size and looks at it.
+
+**Patterns the dashboard added:**
+
+- A page whose parts follow different scopes loads from one endpoint that
+  sends each part `null` to whoever may not see it; the page leaves a null
+  part out — no `*hasScope` and no role names.
+- A tile that opens its screen is an `<a class="tile">` (`_figures.scss`).
+- A spec that lands on `/` must answer the dashboard's request
+  (`DASHBOARD`, `DASHBOARD_URL` in `features/reports/reports-testing.ts`).
 
 ---
 
@@ -399,7 +447,9 @@ instead of greying it out.
 | 5c-6 | Sales: every sale by date, status, seller and number (Sell → Sales) | Done |
 | 5d-1 | Printing: a sale's invoice, at the till and from Sales, on the receipt paper | Done — Khmer labels to be checked by the owner |
 | 5d-2 | Printing: quotations (A4) and payment receipts (receipt paper) | Done |
-| 6 | Reports and the dashboard — backend slice 6 first | **Next** — agree the design first |
+| 6a | Reports → Daily sales (backend `reports` app first) | Done |
+| 6b | Reports → Stock on hand | Done |
+| 6c | Reports → Receivables | Done |
+| 6d | Dashboard (backend endpoint first) | Done |
 
-**No API yet for:** Dashboard, Daily sales, Stock on hand, Receivables
-(backend slice 6).
+**Not built yet:** Users (greyed out in the menu).

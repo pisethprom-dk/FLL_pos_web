@@ -6,6 +6,7 @@ export { CatalogueService } from './services/catalogue.service';
 export { CompanyService } from './services/company.service';
 export { InventoryService } from './services/inventory.service';
 export { PartnersService } from './services/partners.service';
+export { ReportsService } from './services/reports.service';
 export { SalesService } from './services/sales.service';
 export { UsersService } from './services/users.service';
 export { WarrantyService } from './services/warranty.service';

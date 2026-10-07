@@ -291,6 +291,14 @@ export type { PartnersSuppliersPartialUpdate$XWwwFormUrlencoded$Params as Partne
 export { partnersSuppliersPartialUpdate$XWwwFormUrlencoded as partnersSuppliersPartialUpdate$XWwwFormUrlencoded } from './fn/partners/partners-suppliers-partial-update-x-www-form-urlencoded';
 export type { PartnersSuppliersPartialUpdate$FormData$Params as PartnersSuppliersPartialUpdate$FormData$Params } from './fn/partners/partners-suppliers-partial-update-form-data';
 export { partnersSuppliersPartialUpdate$FormData as partnersSuppliersPartialUpdate$FormData } from './fn/partners/partners-suppliers-partial-update-form-data';
+export type { ReportsDailySalesRetrieve$Params as ReportsDailySalesRetrieve$Params } from './fn/reports/reports-daily-sales-retrieve';
+export { reportsDailySalesRetrieve as reportsDailySalesRetrieve } from './fn/reports/reports-daily-sales-retrieve';
+export type { ReportsDashboardRetrieve$Params as ReportsDashboardRetrieve$Params } from './fn/reports/reports-dashboard-retrieve';
+export { reportsDashboardRetrieve as reportsDashboardRetrieve } from './fn/reports/reports-dashboard-retrieve';
+export type { ReportsReceivablesRetrieve$Params as ReportsReceivablesRetrieve$Params } from './fn/reports/reports-receivables-retrieve';
+export { reportsReceivablesRetrieve as reportsReceivablesRetrieve } from './fn/reports/reports-receivables-retrieve';
+export type { ReportsStockOnHandRetrieve$Params as ReportsStockOnHandRetrieve$Params } from './fn/reports/reports-stock-on-hand-retrieve';
+export { reportsStockOnHandRetrieve as reportsStockOnHandRetrieve } from './fn/reports/reports-stock-on-hand-retrieve';
 export type { SalesCustomersAccountRetrieve$Params as SalesCustomersAccountRetrieve$Params } from './fn/sales/sales-customers-account-retrieve';
 export { salesCustomersAccountRetrieve as salesCustomersAccountRetrieve } from './fn/sales/sales-customers-account-retrieve';
 export type { SalesInvoicesList$Params as SalesInvoicesList$Params } from './fn/sales/sales-invoices-list';

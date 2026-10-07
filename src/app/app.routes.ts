@@ -1,4 +1,4 @@
-// v1.10.0 — top-level routes. A screen inside the shell is added with
+// v1.13.0 — top-level routes. A screen inside the shell is added with
 // screenRoute(SCREENS.x, ...), which takes its path, title and scope check
 // from core/shell/screens.ts.
 import { Routes } from '@angular/router';
@@ -43,6 +43,18 @@ export const routes: Routes = [
       }),
       screenRoute(SCREENS.warranty, {
         loadComponent: () => import('./features/warranty/claims').then((m) => m.Claims),
+      }),
+      screenRoute(SCREENS.dailySales, {
+        loadComponent: () =>
+          import('./features/reports/daily-sales').then((m) => m.DailySalesReport),
+      }),
+      screenRoute(SCREENS.stockOnHand, {
+        loadComponent: () =>
+          import('./features/reports/stock-on-hand').then((m) => m.StockOnHandReport),
+      }),
+      screenRoute(SCREENS.receivables, {
+        loadComponent: () =>
+          import('./features/reports/receivables').then((m) => m.ReceivablesReport),
       }),
       screenRoute(SCREENS.quotations, {
         loadComponent: () => import('./features/quotations/quotations').then((m) => m.Quotations),

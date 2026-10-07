@@ -1,4 +1,4 @@
-// v1.10.0 — every screen in the menu: its label, path, title and the scopes
+// v1.13.0 — every screen in the menu: its label, path, title and the scopes
 // that open it. The menu and the route guards both read from here, so they
 // cannot disagree. Set `ready` to true when a screen is built; until then the
 // menu shows it greyed out.
@@ -77,21 +77,21 @@ export const SCREENS = {
     title: 'Daily sales',
     path: 'reports/daily-sales',
     scopes: ['report.sales.all', 'report.sales.own'],
-    ready: false,
+    ready: true,
   },
   stockOnHand: {
     label: 'Stock on hand',
     title: 'Stock on hand',
     path: 'reports/stock-on-hand',
     scopes: ['report.stock'],
-    ready: false,
+    ready: true,
   },
   receivables: {
     label: 'Receivables',
     title: 'Receivables',
     path: 'reports/receivables',
     scopes: ['report.receivables'],
-    ready: false,
+    ready: true,
   },
 
   products: {

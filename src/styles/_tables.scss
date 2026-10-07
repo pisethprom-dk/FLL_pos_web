@@ -1,4 +1,4 @@
-// v1.4.0 — tables and status pills.
+// v1.5.0 — tables and status pills.
 table{width:100%;border-collapse:collapse;}
 th,td{padding:9px 18px;text-align:left;border-bottom:1px solid var(--line);font-size:13.5px;}
 thead th{font-weight:600;color:var(--muted);font-size:12.5px;background:#FBFAF7;}
@@ -33,3 +33,7 @@ td.indent{padding-left:38px;}
 .pager-range{margin-right:auto;}
 // Added: a code that must read as one word (TL-0101), however narrow the column.
 .nowrap{white-space:nowrap;}
+// Added: a report's wide table — tighter cells, and it scrolls inside its panel
+// rather than the page on a narrow screen.
+.report-wrap{overflow-x:auto;}
+.report-wrap th,.report-wrap td{padding:9px 10px;}

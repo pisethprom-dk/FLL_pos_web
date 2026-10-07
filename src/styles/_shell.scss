@@ -1,4 +1,4 @@
-// v1.2.0 — sidebar, top bar and the page frame.
+// v1.2.1 — sidebar, top bar and the page frame.
 // Changed: the sidebar takes the shop's colours (option A, agreed 2026-10-05) —
 // deep teal, with the active screen in brand yellow. See _tokens.scss.
 // Changed: the brand block shows logo and name only, no address (owner's choice).
@@ -57,7 +57,7 @@
 .chip b{color:var(--ink);font-weight:600;}
 .dot{width:7px;height:7px;border-radius:50%;background:var(--good);flex:0 0 auto;}
 
-.page{padding:24px 28px 56px;max-width:1240px;}
+.page{padding:24px 28px 56px}
 .page-intro{margin:0 0 20px;color:var(--muted);max-width:68ch;}
 
 @media (max-width:760px){

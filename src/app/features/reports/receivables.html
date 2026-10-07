@@ -1,0 +1,197 @@
+<!-- v1.0.0 -->
+<div class="page">
+  <p class="page-intro">
+    What store customers owe and how old it is, by the days since each invoice. Worked out from
+    invoices less payments and returns — no balance is stored on the customer.
+  </p>
+
+  <div class="filters">
+    <select aria-label="Show" (change)="setShow($any($event.target).value)">
+      @for (o of showOptions; track o.value) {
+        <option [value]="o.value" [selected]="show() === o.value">{{ o.label }}</option>
+      }
+    </select>
+  </div>
+
+  @if (report.error(); as error) {
+    <app-load-error [error]="error" (retry)="report.reload()" />
+  } @else if (last(); as r) {
+    @let s = r.summary;
+    <div class="tiles" style="margin-bottom: 20px">
+      <div class="tile">
+        <small>Total owed</small>
+        <b class="num">{{ s.owed | usd }}</b>
+        <div class="sub num">{{ s.owed_khr ? (s.owed_khr | khr) + " at today's rate" : '—' }}</div>
+      </div>
+      <div class="tile">
+        <small>Past 60 days</small>
+        <b class="num" [class.neg]="s.past_60 !== '0.00'">{{ s.past_60 | usd }}</b>
+        <div class="sub">
+          {{ s.past_60_share === null ? '—' : s.past_60_share + '% of the total' }}
+        </div>
+      </div>
+      <div class="tile">
+        <small>Collected this month</small>
+        <b class="num">{{ s.collected_this_month | usd }}</b>
+        <div class="sub ok">Payments posted</div>
+      </div>
+      <div class="tile">
+        <small>Over limit or on hold</small>
+        <b class="num">{{ s.flagged.length }}</b>
+        <div class="sub" [class.alert]="s.flagged.length > 0">
+          {{ s.flagged.length ? s.flagged.join(', ') : 'None' }}
+        </div>
+      </div>
+    </div>
+
+    <div class="panel" style="margin-bottom: 20px">
+      <div class="panel-head">
+        <h3>Aging by customer — {{ r.as_at | date: 'd MMM y' }}</h3>
+        <div class="spacer"></div>
+        @if (report.isLoading()) {
+          <span class="muted" role="status">Updating…</span>
+        }
+      </div>
+      <div class="report-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Customer</th>
+              <th class="r nowrap">0–30 days</th>
+              <th class="r">31–60</th>
+              <th class="r">61–90</th>
+              <th class="r nowrap">Over 90</th>
+              <th class="r">Owed</th>
+              <th class="r">Limit</th>
+              <th class="r nowrap">Room left</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (row of r.rows; track row.customer) {
+              <tr>
+                <td>
+                  {{ row.name }}
+                  @if (row.on_hold) {
+                    <span class="pill low">On hold</span>
+                  }
+                  @if (row.over_limit) {
+                    <span class="pill low">Over limit</span>
+                  }
+                  <span class="cell-sub num">{{ row.code }}</span>
+                </td>
+                <td class="r num">{{ row.d0_30 | usd }}</td>
+                <td class="r num">{{ row.d31_60 | usd }}</td>
+                <td class="r num">{{ row.d61_90 | usd }}</td>
+                <td class="r num" [class.neg]="row.over_90 !== '0.00'">{{ row.over_90 | usd }}</td>
+                <td class="r num">{{ row.owed | usd }}</td>
+                <td class="r num">{{ row.credit_limit | usd }}</td>
+                <td class="r num" [class.neg]="negative(row.room_left)">
+                  {{ row.room_left | usd }}
+                </td>
+                <td class="r">
+                  <button type="button" class="rowlink" (click)="open(row)">Open</button>
+                </td>
+              </tr>
+            } @empty {
+              <tr>
+                <td colspan="9" class="muted">Nobody here owes the shop anything.</td>
+              </tr>
+            }
+          </tbody>
+          @if (r.rows.length) {
+            @let t = r.totals;
+            <tfoot>
+              <tr>
+                <td>Total</td>
+                <td class="r num">{{ t.d0_30 | usd }}</td>
+                <td class="r num">{{ t.d31_60 | usd }}</td>
+                <td class="r num">{{ t.d61_90 | usd }}</td>
+                <td class="r num">{{ t.over_90 | usd }}</td>
+                <td class="r num">{{ t.owed | usd }}</td>
+                <td class="r num">{{ t.credit_limit | usd }}</td>
+                <td class="r num">{{ t.room_left | usd }}</td>
+                <td></td>
+              </tr>
+            </tfoot>
+          }
+        </table>
+      </div>
+    </div>
+
+    @if (chosen(); as c) {
+      <div class="panel">
+        <div class="panel-head">
+          <h3>{{ c.name }} — open invoices</h3>
+          <div class="spacer"></div>
+          <button
+            *hasScope="'payment.record'"
+            class="btn"
+            type="button"
+            [disabled]="opening()"
+            (click)="recordPayment()"
+          >
+            Record a payment
+          </button>
+          <button type="button" class="rowlink" (click)="chosen.set(null)">Close</button>
+        </div>
+        @if (account.error(); as error) {
+          <div class="form"><app-load-error [error]="error" (retry)="account.reload()" /></div>
+        } @else {
+          <div class="report-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Invoice</th>
+                  <th>Date</th>
+                  <th>Due</th>
+                  <th class="r">Invoiced</th>
+                  <th class="r">Paid</th>
+                  <th class="r">Returned</th>
+                  <th class="r">Balance</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (inv of invoices(); track inv.id) {
+                  @let st = state(inv);
+                  <tr>
+                    <td class="num nowrap">{{ inv.number }}</td>
+                    <td class="nowrap">{{ inv.sale_date | date: 'd MMM y' }}</td>
+                    <td class="nowrap" [class.neg]="inv.overdue">
+                      {{ inv.due_date ? (inv.due_date | date: 'd MMM y') : '—' }}
+                    </td>
+                    <td class="r num">{{ inv.on_credit | usd }}</td>
+                    <td class="r num">{{ inv.paid | usd }}</td>
+                    <td class="r num">{{ inv.credited | usd }}</td>
+                    <td class="r num">{{ inv.balance | usd }}</td>
+                    <td>
+                      <span [class]="'pill ' + st.tone">{{ st.label }}</span>
+                    </td>
+                  </tr>
+                } @empty {
+                  <tr>
+                    <td colspan="8" class="muted">
+                      {{ account.isLoading() ? 'Looking…' : 'Nothing is owed now.' }}
+                    </td>
+                  </tr>
+                }
+              </tbody>
+              @if (account.hasValue() && invoices().length) {
+                <tfoot>
+                  <tr>
+                    <td colspan="6">Balance owed</td>
+                    <td class="r num">{{ account.value().balance | usd }}</td>
+                    <td></td>
+                  </tr>
+                </tfoot>
+              }
+            </table>
+          </div>
+        }
+      </div>
+    }
+  } @else {
+    <p class="loading">Loading…</p>
+  }
+</div>

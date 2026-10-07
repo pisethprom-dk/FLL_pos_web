@@ -1,11 +1,12 @@
-// v1.1.0 — "Record a payment": money a store customer pays against their
+// v1.2.0 — "Record a payment": money a store customer pays against their
 // invoices. It must be applied in full and never be more than they owe; the
 // open invoices fill oldest first as the amount is typed, and any line can
 // then be changed (owner's choice, 2026-10-06). Riel converts at the rate of
 // the payment's date, as the server converts it. Frozen once saved. Save and
 // print receipt prints it once saved; the dialog closes either way, since the
-// payment stands — a failed print is printed again from the list.
-import { DialogRef } from '@angular/cdk/dialog';
+// payment stands — a failed print is printed again from the list. Opened
+// from Receivables, the customer comes already chosen.
+import { DIALOG_DATA, DialogRef } from '@angular/cdk/dialog';
 import { DatePipe } from '@angular/common';
 import { Component, computed, inject, linkedSignal, signal } from '@angular/core';
 import { rxResource, takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
@@ -45,7 +46,9 @@ export class RecordPayment {
   protected readonly tenders = TENDERS;
   protected readonly today = today();
 
-  protected readonly customer = signal<CustomerLookup | null>(null);
+  protected readonly customer = signal<CustomerLookup | null>(
+    inject<CustomerLookup | null>(DIALOG_DATA, { optional: true }) ?? null,
+  );
   protected readonly account = rxResource({
     params: () => this.customer()?.id,
     stream: ({ params: id }) => this.api.salesCustomersAccountRetrieve({ id }),

@@ -1,4 +1,483 @@
-<!-- v1.12.6 -->
+<!-- v1.17.3 -->
+# Sample sales data — two rows for each thin screen
+
+The catalogue and stock screens already hold plenty (88 products, 5
+suppliers, 22 stock-ins, 17 adjustments, 3 counts). The selling side is
+nearly empty: one store customer, one payment note, one quotation, two
+sales, and no payments, returns, voids, held sales or warranty claims.
+
+Owner's choices (2026-10-07): only the thin screens; a backend command
+beside `seed_demo` and `seed_stock_demo`; dated over recent weeks; the
+database dumped first; one exchange-rate row added — ៛4,100 from 1 Sep 2026
+— so a sale can be dated before 2 Oct.
+
+## Design
+
+**`manage.py seed_sales_demo --admin Piseth --seller Heng`**
+(`sales/management/commands/`). Development only, like the other two.
+- Each document goes through `sales/services.py` — the code the screens
+  post through — in date order, run as of its own day (the clock set to
+  that day, in shop hours). So the invoice number (`INV-20260902001`), the
+  rate, the due date, the stock movement and every stamp are what entering
+  it that day would have made.
+- A back-dated sale only takes products with no stock movement since its
+  day, so each product's ledger stays in date order and `recompute_stock
+  --check` finds no drift.
+- It refuses to run twice (its customers already exist). Going back is by
+  the dump.
+
+**What it adds** (two of each):
+
+| Screen | Rows |
+|---|---|
+| Exchange rate | ៛4,100 from 1 Sep 2026 (one row, as asked) |
+| Customers | Sok Heng Construction (wholesale, credit $2,000, 30 days); Dara Home Repair (wholesale, credit $500, 15 days) |
+| Payment notes | "Cash at the counter" — no bank details, so no made-up account ever prints on a real invoice |
+| Quotations | Sok Heng: 1 Sep, sent, accepted 2 Sep, invoiced; Dara: 6 Oct, sent, valid to 5 Nov |
+| Sales | 2 Sep: Sok Heng from the quotation, all on credit, by Piseth (past due since 2 Oct); 1 Oct: Dara, part cash, part credit, by Heng |
+| Voided | 3 Oct: Heng's walk-in sale rung up twice, voided by Heng that day; 6 Oct: Piseth's sale to the wrong customer, voided by Piseth that day |
+| Held | Two today: a walk-in for "Mr Vuthy", and Dara Home Repair |
+| Customer payments | 20 Sep: Sok Heng ៛400,000 cash, part of its sale; 3 Oct: Dara pays the rest of its sale by KHQR |
+| Returns | 22 Sep: one item back from Sok Heng's sale, credited; 5 Oct: one item back from Dara's (paid by then), refunded in cash |
+| Warranty claims | 25 Sep: a drill from Sok Heng's sale, in warranty, sent for repair; 4 Oct: a grinder bought earlier, out of warranty, received |
+
+Afterwards Receivables shows Sok Heng owing in the 31–60 column, past due;
+Daily sales has Dara's sale in October and Sok Heng's in September.
+
+## Plan
+
+- [x] Dump the database to `../pos_backend/backups/` (added to the
+      backend's `.gitignore`, never committed)
+- [x] The command, with a test on the demo catalogue and stock history:
+      two of each; each document's date, number and rate; the ledger in
+      date order and `recompute_stock --check` clean; Sok Heng owes, Dara
+      does not; a second run refused
+- [x] Run all backend tests
+- [x] Run it on the dev database; `recompute_stock --check`; look at each
+      screen in the browser — two new rows on each
+- [x] Update the backend `CLAUDE.md` and write the review below
+
+## Review
+
+- **Dump**: `../pos_backend/backups/pos-before-sales-demo-2026-10-07.dump`,
+  taken before anything changed; `backups/` is git-ignored.
+- **Command**: `sales/management/commands/seed_sales_demo.py` — every
+  document through `sales/services.py`, each as of its own moment (the clock
+  patched to that day). A daily number follows on from what its day holds
+  (INV-20261006002 after the shop's own 001), and both daily counters are put
+  back afterwards, so the next real sale today is still INV-20261007002. A
+  back-dated sale takes the first product not moved since its day.
+- **Tests**: 3 new in `sales/tests.py` (on the demo catalogue and stock
+  history, the clock fixed at 7 Oct 2026): two of each with their numbers,
+  dates, rates, balances; the ledger in date order and `recompute_stock
+  --check` clean; the next real number untouched; a moved product passed
+  over; a second run and a wrong role refused. 248 backend tests. Six
+  deliberate breaks each failed a test; a seventh (a refund method on a
+  fully credited return) changed nothing, as the server clears it.
+- **Run on the dev database** (`--admin Piseth --seller Heng`): Sok Heng
+  Construction (CUS-000001) owes $84.64 — $210.20 on 2 Sep, less ៛400,000
+  (= $97.56) and a $28.00 jigsaw back; Dara Home Repair (CUS-000002) owes
+  nothing after its KHQR payment and a $4.70 cash refund. Every screen showed
+  its two new rows in the browser (customers, the 1 Sep rate, payment notes,
+  quotations, sales, voids, held sales, payments, returns, claims), and
+  Receivables, Daily sales and the Dashboard took them in. `recompute_stock
+  --check` clean. The two temporary check users were deleted afterwards.
+- `../pos_backend/CLAUDE.md`: `seed_sales_demo` described; 248 tests.
+
+---
+
+# 6d Dashboard
+
+The first page after sign-in: today at a glance, from the figures the three
+reports already work out. Any signed-in user; each part shows only to those
+whose scopes allow it.
+
+Owner's choices (2026-10-07):
+- The mockup's "Cash in drawer" becomes **Cash taken today**: cash sales after
+  change, plus cash customer payments, less cash refunds — one dollar figure.
+  It is not a drawer count (there is no opening float, and a refund does not
+  record $ or ៛). Admin only.
+- **A Seller sees their own sales**, as Daily sales holds them: no profit, no
+  cash, no money owed, no stock value.
+- **Sales by category** is for today, as the mockup.
+- Three extras beyond the mockup: **held sales waiting, quotations to follow
+  up, open warranty claims**.
+
+## Design
+
+**Backend — `GET /api/reports/dashboard/`** (no parameters). Worked out on
+every call, reusing the reports' code. A part the user may not see is `null`.
+- `today` (`report.sales.all`, or `.own` for their own): sales, in riel at
+  each sale's rate, transactions, average sale; profit and margin with
+  `cost.view`.
+- `cash_today` (`report.sales.all`): cash from today's sales after change,
+  cash payments posted today, cash refunds posted today, and the total.
+- `last_7_days` (sales scopes): seven days, oldest first; a day with no sales
+  is 0.00; each with its share of the week's best day, for the bar's height.
+- `by_category` (sales scopes): today's sales by main category (a
+  sub-category counts in its group), the four biggest plus Other, each with
+  its share of the day.
+- `recent_sales` (sales scopes): the last 5 completed sales — id, number,
+  time, customer or walk-in name, Cash / KHQR / Credit / Mixed, total.
+- `stock` (`report.stock`): products, value at cost (`cost.view`), below
+  reorder, out of stock; up to 5 running low (out of stock first, then by
+  code) and how many more.
+- `owed` (`report.receivables`): total and over 90 days; the 5 customers who
+  owe most with the four age columns; totals over everyone; how many more.
+- `held_sales` (`sell`): how many sales are held — shop-wide, as any till may
+  resume one.
+- `quotations` (`quotation.view`): sent and not yet answered; of those, how
+  many expire within 7 days and how many have expired.
+- `warranty` (`warranty.view`): open claims; of those, how many are out of
+  warranty.
+
+As in Daily sales, a voided sale leaves the day it was sold.
+
+**Screen — Dashboard** (replaces the placeholder), the mockup's layout:
+- The teal band: Sales today ($ and ៛), Transactions, Average sale, Gross
+  profit and Margin (with `cost.view`).
+- Tiles — an Admin: Cash taken today (sales · payments · refunds below),
+  Customers owe (over 90 days in red), Stock value at cost, Below reorder
+  level; then a row of three: Held sales, Quotations to follow up, Open
+  warranty claims, each a link to its screen (held sales to the Till, whose
+  Held sales button lists them). A Seller: one row of four — Below reorder
+  and the three.
+- Sales, last 7 days (bars, today marked) → Open daily sales; Sales by
+  category, today.
+- Recent sales (a row opens the sale read only, as from Sales) → See all
+  (Sell → Sales); Running low → Open stock on hand.
+- Money owed to the shop (top 5, totals of everyone, "and N more") → Open
+  receivables. Admin only.
+- Worked out fresh each time it opens. No auto-refresh, no comparison with
+  yesterday, no Export.
+
+## Plan
+
+- [x] Backend: `dashboard(user)` in `reports/services.py` (today and the 7
+      days from `daily_sales()`, stock from `stock_on_hand()`, money owed
+      from `receivables()`, plus the new cash, by-category, recent-sales and
+      to-do counts); its serializer, view and URL. Tests: an Admin gets every
+      part; a Seller their own sales and no cash, owed, value or profit;
+      cash taken (change, a riel payment, a cash refund; a voided payment
+      and a KHQR refund left out); empty days filled; categories roll up,
+      with Other; the tender label; the quotation and warranty counts;
+      schema at 0 warnings
+- [x] Regenerate the API client (`npm run api`) and build
+- [x] Screen: `features/dashboard/dashboard.ts|html`; fixtures in
+      `reports-testing.ts`; `dashboard.spec.ts` — Admin, Seller, a day with
+      no sales, a load error with Try again, a recent sale opening
+- [x] Run all tests (both projects), the build and Prettier
+- [x] Live check: dump; today a cash sale with riel change, a KHQR sale and a
+      credit sale, a cash payment, a cash refund, a held sale, a sent
+      quotation about to expire, an open claim; compare the dashboard with
+      the database as Admin and as Seller; restore
+- [x] Update both `CLAUDE.md` files and write the review below
+
+## Review
+
+- **Backend**: `GET /api/reports/dashboard/` in `reports` — `dashboard(user)`
+  reuses `daily_sales()` (today, and the 7 days), `stock_on_hand()` and
+  `receivables()`, and adds cash taken today, today by main category, the
+  last 5 sales with how each was paid, and the held, quotation and warranty
+  counts; each part null without its scope. 245 backend tests (4 new);
+  schema at 0 warnings. Ten deliberate breaks each failed a test (no Mixed,
+  empty days dropped, sub-categories not rolled up, a Seller given cash, a
+  voided payment or a KHQR refund counted as cash, low stock by code only,
+  the 7th day not counted as expiring, closed claims counted, a voided sale
+  in recent).
+- **Frontend**: the Dashboard replaces the placeholder — band, the money
+  tiles and the three to-do tiles (links), the 7-day bars and categories,
+  recent sales (a row opens the sale read only), running low, money owed.
+  A tile that links is an `<a class="tile">` (`_figures.scss`). 269 tests
+  (5 new); ten breaks, each failed a test once "over 90 days" in red was
+  added. The specs that land on `/` (shell, sell, change password) now
+  answer the dashboard's request.
+- **Live check**, dumped first and restored after (all 40 tables
+  identical): a Seller's riel cash sale with change, an Admin's KHQR sale
+  and credit sale, a $10 cash payment, a $6 cash refund, a held sale, a
+  quotation sent with three days left, a claim after its warranty ended.
+  The Admin's dashboard matched a count from the database — $153.00 from 4
+  sales (៛612,000), average $38.25, profit $48.09, 31.4%; cash $85.00 ($81 +
+  $10 − $6); $7.00 owed; 84 products, $23,225.90, 1 below reorder; the bars,
+  categories and recent sales. The Seller saw only their $65.00 sale, no
+  money tiles, one row of four. A recent sale opened read only; the Held
+  sales tile went to the Till. No sideways scroll at 1366 or 900px; no
+  console errors.
+- `CLAUDE.md` (both): the dashboard's rules, decision and patterns; step 6
+  done.
+
+---
+
+# 6c Receivables
+
+What store customers owe and how old it is, as at today. Worked out from
+invoices less payments and returns — no balance is stored on the customer.
+Admin only (`report.receivables`).
+
+Owner's choices (2026-10-07): a debt is aged by the days since its invoice
+(0–30, 31–60, 61–90, over 90 — the mockup's figures add up that way, and
+"past 60 days" is the last two columns); clicking a customer shows their
+open invoices, with Record a payment; only customers who owe are listed; no
+statements for now.
+
+## Design
+
+**Backend — `GET /api/reports/receivables/`** (`show`: overdue, over_limit,
+on_hold):
+- One row per store customer who owes: code, name, the four age columns
+  (each open invoice's balance, by the days since it was sold), owed,
+  credit limit, room left (limit less owed — below zero when over),
+  whether any invoice is past its due date, over the limit, on credit hold.
+- Summary over everyone who owes, whatever the filter: owed, in riel at
+  today's rate; owed past 60 days and its share; collected this month (posted
+  payments dated this month); how many are over their limit or on hold, and
+  who.
+- The rows' totals for the table's last line.
+- A customer's open invoices come from the account endpoint already there
+  (`/api/sales/customers/{id}/account/`).
+
+**Screen — Reports → Receivables**
+- Filter: All who owe, Overdue only, Over limit, On hold.
+- Tiles: Total owed (riel under it) · Past 60 days (share of the total) ·
+  Collected this month · Over limit or on hold (how many; their names).
+- Table: Customer (On hold / Over limit pills) · 0–30 days · 31–60 · 61–90
+  · Over 90 · Owed · Limit · Room left (red below zero) · Open; the totals.
+- Open → below the table, "<customer> — open invoices": Invoice · Date ·
+  Due · Invoiced · Paid · Balance · Status (Open, Part paid, Overdue,
+  Overdue 90+); the balance owed; **Record a payment** opens the payment
+  dialog with that customer already chosen, and the report reloads after.
+- No Send statements, no Export.
+
+## Plan
+
+- [x] Backend: the receivables report in `reports` — rows with the aging,
+      limit, room, flags; the filter; the summary (riel at today's rate,
+      past 60 days, collected this month, over limit or on hold); schema at
+      0 warnings
+- [x] Backend tests: aging by the invoice's age, payments and returns taken
+      off, voided payments ignored, the walk-in and settled customers left
+      out, over limit / on hold / overdue, collected this month, Admin only
+- [x] Regenerate the client
+- [x] `features/reports/receivables`: filter, tiles, the aging table, the
+      customer's open invoices; Record a payment with the customer chosen
+      (the payment dialog takes an optional customer); menu ready
+- [x] Tests: the report, the filter, a customer's invoices, Record a
+      payment pre-filled and the reload; a Seller cannot open it
+- [x] Run all tests (both projects) and the build
+- [x] Live check: dump; credit sales to two customers, one dated back past
+      90 days, a payment and a return against them, one put on hold;
+      compare the screen with the database; Record a payment from the
+      report; restore
+- [x] Update both `CLAUDE.md` files and write the review below
+
+## Review
+
+- **Backend**: `GET /api/reports/receivables/` in `reports` — one row per
+  customer who owes, aged by the days since each invoice, with limit, room
+  and flags; the filter; the summary (riel at today's rate, past 60 days,
+  collected this month, who is flagged); the rows' totals. 241 backend
+  tests (4 new); schema at 0 warnings. Aging by the due date, counting
+  voided payments as collected, a summary that followed the filter, and
+  letting a Seller in each failed a test.
+- **Frontend**: Reports → Receivables — the filter, four tiles, the aging
+  table with On hold / Over limit pills and red room left below zero; Open
+  shows the customer's open invoices (a Returned column beside Paid, so a
+  return is not mistaken for a payment) and Record a payment opens the
+  payment dialog with that customer chosen (it now takes an optional
+  customer); the report reloads after. 264 tests (3 new); the customer not
+  passed on, no reload after a payment, and overdue shown as open each
+  failed a test.
+- **Live check**, dumped first and restored after (all 40 tables
+  identical; Chipmong's limit and hold back as they were): Chipmong with a
+  sale 100 days old ($20 paid) and today's (a return), lowered below its
+  balance; a new customer with a sale 45 days old, put on hold. The tiles
+  ($180.60, ៛722,400; $29.00 past 60 days, 16.1%; $20.00 collected; both
+  flagged), rows and totals matched a count from the database; the filters
+  kept the right customer; Chipmong's invoices read Overdue 90+ and Part
+  paid. Record a payment opened with Chipmong chosen; $5 went to the oldest
+  invoice and the report reloaded ($175.60, back under the limit). A Seller
+  has no Receivables and is turned away. No console errors.
+- `CLAUDE.md` (both): the receivables rules and decision; 6c done, 6d
+  Dashboard next.
+
+---
+
+# 6b Stock on hand
+
+What is on the shelf and what it is worth at average cost, as at today.
+Both roles may open it (`report.stock`); cost and value only with
+`cost.view` (an Admin), as everywhere else.
+
+Owner's choices (2026-10-07): as at today only; every matching product on
+one page; "no movement" fixed at 90 days; a search box for code or name.
+
+## Design
+
+**Backend — `GET /api/reports/stock-on-hand/`** (`status`, `category`,
+`brand`, `search`):
+- The products: those that track stock and are active, plus any retired one
+  still holding stock (as a count lists them); by code.
+- Each row: code, name, brand, unit, shelf, on hand, reorder at, average
+  cost and value (null without `cost.view`), the day it last moved, and a
+  status — Out of stock (nothing on hand), Reorder (at or below the reorder
+  level), No movement (holding stock, nothing in or out for 90 days), or OK
+  — the first that applies.
+- Filters: status (all, below reorder level — out of stock included, out of
+  stock, no movement), category (its sub-categories too), brand, search on
+  code, name or barcode.
+- Summary, over all stock whatever the filters: products, value at cost,
+  below reorder level and how many are out, no movement and the value tied
+  up in it, the last posted count (number, date, category, lines that
+  differed, its value); and the total value of the rows listed.
+
+**Screen — Reports → Stock on hand**
+- Filters: status (All products, Below reorder level, Out of stock, No
+  movement 90 days), category, brand, search.
+- Tiles: Stock value at cost (products; Admin) · Below reorder level (n out
+  of stock) · No movement 90 days (value tied up, for an Admin) · Last
+  counted (date · category · variance).
+- Table: Code · Product · Brand · Shelf · On hand (unit) · Reorder at · Avg
+  cost · Value · Status; the footer gives how many and their value. A
+  Seller sees no cost or value.
+- No Print count sheet (agreed for the stock screens).
+
+## Plan
+
+- [x] Backend: the stock on hand report in `reports` — rows with status and
+      last movement, the filters, the summary and last count, cost and value
+      only with `cost.view`; schema at 0 warnings
+- [x] Backend tests: the status rules (out, reorder, no movement, OK),
+      retired with stock kept and non-stock left out, the filters (category
+      with its children, brand, search, status), the summary over all stock,
+      the last count, a Seller without cost
+- [x] Regenerate the client
+- [x] `features/reports/stock-on-hand`: filters, tiles, the table; menu
+      ready
+- [x] Tests: an Admin's report, a Seller's (no cost), each filter sent
+- [x] Run all tests (both projects) and the build
+- [x] Live check: dump; on the sample stock history, a product moved back
+      past 90 days, a sale that takes one below its reorder level, one sold
+      out; compare the screen with the database; restore
+- [x] Update both `CLAUDE.md` files and write the review below
+
+## Review
+
+- **Backend**: `GET /api/reports/stock-on-hand/` in `reports` — rows with
+  their status and last movement, the filters, the summary over all stock
+  and the last count, cost and value null without `cost.view`. 237 backend
+  tests (5 new); schema at 0 warnings. Putting reorder before out of stock,
+  a summary that followed the filters, leaving out sub-categories, listing
+  retired empty products, and cost for a Seller each failed a test.
+- **Frontend**: Reports → Stock on hand — status, category, brand and
+  search; four tiles (three for a Seller); every matching product on one
+  page with a Last moved column (added — the date the backend already
+  sends) and the total value. 261 tests (3 new); showing no movement as
+  OK, cost for a Seller, and the brand not sent each failed a test. The
+  shell's greyed-menu check moved to the Admin's menu: a Seller has nothing
+  greyed out any more.
+- **Live check**, dumped first and restored after (all 40 tables
+  identical): on the sample stock history, the washer's movements moved
+  back 100 days, two drills sold to their reorder level, the cut-off saw
+  sold out. The tiles ($22,835.80 over 84 products; 3 below reorder, 1 out;
+  1 idle with $564.08 tied up; CNT-000002 on 30 Sep, −$23.49), every
+  filter and the Power tools total ($10,998.28 over 26) matched a count
+  straight from the database; the Seller saw no cost. No console errors.
+- **Fixed after the live check**: product names wrapped onto two or three
+  lines in a ten-column table — a report's table now sits in `.report-wrap`
+  (tighter cells, scrolls inside its panel), so each product keeps one line
+  and the page never scrolls sideways.
+- `CLAUDE.md` (both): the stock on hand rules and decision; 6b done, 6c
+  Receivables next.
+
+---
+
+# 6a Daily sales — the first report
+
+Step 6 (owner's choices, 2026-10-07): one report at a time, each its
+backend endpoint and then its screen — Daily sales → Stock on hand →
+Receivables → Dashboard last. No Export for now. Daily sales has no tender
+filter: the By tender table and the Cash / KHQR / Credit columns already
+split every sale by how it was paid.
+
+The rules are the backend's (`scopes.py`): an Admin sees every seller's
+sales with cost and profit (`report.sales.all`, `cost.view`); a Seller sees
+only their own, without cost or profit (`report.sales.own`).
+
+## Design
+
+**Backend — a new `reports` app, `GET /api/reports/daily-sales/`**
+(`date_from`, `date_to`, `seller`):
+- Completed sales only, by the day they were sold — voided and held ones
+  are left out. A Seller's report is always their own; `seller` is for an
+  Admin.
+- Summary: sales (and in riel, each sale at its own stamped rate),
+  invoices, average sale, discount given, cost and profit and margin
+  (null without `cost.view`), returns posted in the period (value, count).
+- By day: date · invoices · cash · KHQR · credit · sales · cost · profit.
+  Cash is what the sale came to less KHQR and credit — what stayed in the
+  drawer after change, rounding included — so the three always add up to
+  the sales.
+- By seller: invoices · sales · average · discount given.
+- By tender: cash, KHQR, credit — each with its share of the sales.
+- Cost is the cost stamped on each sale line when it was sold, so the
+  report never changes when stock is bought at a new price.
+
+**Screen — Reports → Daily sales**
+- Filters: period — This month (default), Today, Last 7 days, Dates…
+  (From–To); seller (an Admin only: All sellers, then each).
+- Tiles: Sales (riel under it) · Gross profit (margin; Admin) · Invoices
+  (average) · Returns (−value, how many).
+- By day, with the period's totals; By seller (Admin); By tender.
+- The mockup's note: "Cost is the figure stamped on each sale line…"
+
+## Plan
+
+- [x] Backend: the `reports` app — the daily sales report (summary, by
+      day, by seller, by tender, returns), a Seller held to their own,
+      cost and profit only with `cost.view`; the schema stays at 0 warnings
+- [x] Backend tests: totals that add up, voids and held sales left out,
+      cash net of change, riel at each sale's rate, a Seller's own only and
+      no cost, returns in the period
+- [x] Regenerate the client
+- [x] `features/reports/daily-sales`: filters, tiles, the three tables;
+      the menu entry ready
+- [x] Tests: an Admin's report, a Seller's (own, no cost), the period and
+      seller filters
+- [x] Run all tests (both projects) and the build
+- [x] Live check: dump; sales across a few days (cash with change, riel,
+      KHQR, credit; by Admin and Seller), a void, a return; compare the
+      screen with the database; restore
+- [x] Update both `CLAUDE.md` files and write the review below
+
+## Review
+
+- **Backend**: a new `reports` app — `GET /api/reports/daily-sales/` with
+  the summary, by day, by seller and by tender, the returns of the period,
+  a Seller held to their own and cost/profit null without `cost.view`.
+  `HasScope` now takes a tuple (any one scope). 232 backend tests (5 new);
+  the schema stays at 0 warnings. Counting the whole sale as cash, counting
+  voids, letting a Seller see everyone, cost for a Seller, and the days
+  oldest first each failed a test.
+- **Frontend**: Reports → Daily sales — period (This month, Today, Last 7
+  days, Dates…), seller for an Admin, four tiles (three for a Seller), By
+  day with the period's total, By seller (Admin), By tender. 258 tests
+  (3 new); eight days for "last 7", cost shown to a Seller, and the seller
+  choice not sent each failed a test.
+- **Live check**, dumped first and restored after (all 40 tables
+  identical; the owner's two sales kept): five sales over three days (cash
+  with change and a discount, riel with change, KHQR plus credit to
+  Chipmong, KHQR), one voided, one return. Every by-day row and the totals
+  matched a separate count straight from the database to the cent ($272.50
+  sales, $201.25 cost, $71.25 profit; cash $188.50, KHQR $35.40, credit
+  $48.60); Today and the seller filter matched; the Seller saw only their
+  own three sales, without cost. No console errors.
+- **Fixed after the live check**: the By day panel touched the two below
+  it — 20px between them, as the tiles have.
+- `CLAUDE.md` (both): the reports decisions, the daily sales rules; 6a
+  done, 6b Stock on hand next.
+
+---
+
 # 5d-2 Print quotations and payment receipts
 
 The rest of step 5d (2026-10-07): a quotation to hand a contractor, and a
