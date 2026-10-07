@@ -39,5 +39,10 @@ export interface ProductLookup {
    */
   track_stock?: boolean;
   unit_name: string;
+
+  /**
+   * Zero means none. Printed on the receipt.
+   */
+  warranty_months?: number;
   wholesale_price?: string;
 }

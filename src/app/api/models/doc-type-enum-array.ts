@@ -14,7 +14,6 @@ export const DOC_TYPE_ENUM: DocTypeEnum[] = [
   'STOCK_IN',
   'ADJUSTMENT',
   'COUNT',
-  'WARRANTY',
   'CUSTOMER',
   'SUPPLIER'
 ];

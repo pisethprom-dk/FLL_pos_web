@@ -1,10 +1,16 @@
-// v1.1.0 — calendar dates the way the API sends them: "YYYY-MM-DD", with no
+// v1.2.0 — calendar dates the way the API sends them: "YYYY-MM-DD", with no
 // time and no zone, so they can be compared as strings.
 
 /** Today on this computer's calendar — Phnom Penh at the till. */
 export function today(): string {
   const now = new Date();
   return isoDate(now.getFullYear(), now.getMonth() + 1, now.getDate());
+}
+
+/** The day a timestamp falls on here: "2026-10-05T18:30:00Z" → "2026-10-06" in Phnom Penh. */
+export function dayOf(timestamp: string): string {
+  const at = new Date(timestamp);
+  return isoDate(at.getFullYear(), at.getMonth() + 1, at.getDate());
 }
 
 /** The day before `date`: "2026-09-01" → "2026-08-31". */

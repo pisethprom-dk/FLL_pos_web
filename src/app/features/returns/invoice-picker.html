@@ -1,0 +1,89 @@
+<!-- v1.0.0 -->
+<div class="modal-head">
+  <h3 id="pick-invoice-title">
+    {{ data.purpose === 'void' ? 'Choose the invoice to void' : 'Choose the invoice' }}
+  </h3>
+  <div class="spacer"></div>
+  <button type="button" class="modal-x" aria-label="Close" (click)="ref.close()">&times;</button>
+</div>
+<div class="sheet-tools">
+  <input
+    type="search"
+    aria-label="Search invoices"
+    placeholder="Search invoice number or walk-in name"
+    (input)="type($any($event.target).value)"
+    cdkFocusInitial
+  />
+</div>
+@if (invoices.error(); as error) {
+  <div class="form"><app-load-error [error]="error" (retry)="invoices.reload()" /></div>
+} @else {
+  <div class="lines-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Invoice</th>
+          <th>Date</th>
+          <th>Customer</th>
+          <th class="r">Total</th>
+          <th>Seller</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        @if (invoices.hasValue()) {
+          @for (inv of invoices.value().results; track inv.id) {
+            <tr>
+              <td class="num nowrap">{{ inv.number }}</td>
+              <td class="nowrap">{{ inv.sale_date | date: 'd MMM y, HH:mm' }}</td>
+              <td>
+                {{ inv.customer_name }}
+                @if (inv.walk_in_name) {
+                  <span class="cell-sub">{{ inv.walk_in_name }}</span>
+                }
+              </td>
+              <td class="r num">{{ inv.total | usd }}</td>
+              <td>{{ inv.seller_name ?? '—' }}</td>
+              <td class="r">
+                <button type="button" class="rowlink" (click)="ref.close(inv)">Select</button>
+              </td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="6" class="muted">
+                {{
+                  data.ownToday
+                    ? 'None of your invoices from today matches.'
+                    : 'No completed invoice matches.'
+                }}
+              </td>
+            </tr>
+          }
+        } @else {
+          <tr>
+            <td colspan="6" class="muted">Looking…</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+}
+<div class="form">
+  <div class="form-grid one">
+    <div class="field">
+      <span class="hint">
+        @if (data.ownToday) {
+          Only your own invoices from today are listed — those are the ones a Seller may void.
+        } @else if (data.purpose === 'void') {
+          The server refuses a void once a payment or a return is recorded against the invoice.
+        } @else {
+          Completed invoices, newest first. A return can never be more than was sold, less what has
+          already come back.
+        }
+      </span>
+    </div>
+  </div>
+</div>
+<div class="form-foot">
+  <button class="btn ghost" type="button" (click)="ref.close()">Cancel</button>
+</div>

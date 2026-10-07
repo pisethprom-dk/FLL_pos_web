@@ -1,0 +1,78 @@
+// v1.1.0 — the printed invoice, quotation and payment receipt (shared/print),
+// not in the mockup. #print-root is on the page only while a print is under
+// way: on screen it never shows, and on paper nothing else does. Black on
+// white, sized for the paper — on a roll, the width its printer prints (72 mm
+// of 80 mm paper, 48 mm of 58 mm); on A5 or A4, the page less the margins
+// Printer sets.
+#print-root{display:none;}
+@media print{
+  body > *:not(#print-root){display:none !important;}
+  html,body{background:#fff !important;}
+  #print-root{display:block;}
+}
+.inv{color:#000;font-size:11px;line-height:1.35;}
+.paper-80mm .inv{width:72mm;margin:0 auto;padding:2mm 0;}
+.paper-58mm .inv{width:48mm;margin:0 auto;padding:2mm 0;font-size:9.5px;}
+.paper-A5 .inv{font-size:10.5px;}
+.paper-A4 .inv{font-size:11px;}
+.inv table{width:100%;border-collapse:collapse;}
+// The app's own table look (size, colour, rules) stays off the paper.
+.inv th,.inv td{padding:.4mm 0;vertical-align:top;text-align:left;font-weight:400;font-size:inherit;
+  color:inherit;background:none;border:0;text-transform:none;letter-spacing:0;}
+.inv .r,.inv-meta td,.inv-totals td{text-align:right;}
+// An amount or a date never breaks over two lines; a long customer name may.
+.inv-totals td,.inv-table .r{white-space:nowrap;}
+// Nothing is split across two A5 pages.
+.inv-totals tr,.inv-table tr,.inv-pay{break-inside:avoid;}
+
+// The shop.
+.inv-shop{text-align:center;margin-bottom:3mm;}
+.inv-logo{display:block;width:16mm;height:16mm;object-fit:contain;border-radius:50%;margin:0 auto 1.5mm;}
+.inv-name{font-weight:700;font-size:1.25em;}
+.inv-name-kh{font-weight:600;}
+.inv-header{margin-top:1mm;font-style:italic;}
+
+// The invoice and its buyer.
+.inv-title{text-align:center;font-weight:700;text-transform:uppercase;letter-spacing:.06em;
+  border-top:1px dashed #000;border-bottom:1px dashed #000;padding:1mm 0;margin-bottom:2mm;}
+.inv-copy{border:1px solid #000;padding:0 1.5mm;margin-left:2mm;}
+.inv-meta{margin-bottom:2mm;}
+.inv-meta th{white-space:nowrap;padding-right:2mm;}
+
+// Lines: on a roll, a block each; on A5, a table.
+.inv-lines{border-top:1px dashed #000;border-bottom:1px dashed #000;padding:1mm 0;margin-bottom:2mm;}
+.inv-line{padding:.8mm 0;}
+.inv-row{display:flex;justify-content:space-between;gap:2mm;}
+.inv-off,.inv-note{font-size:.9em;}
+.inv-code{display:block;font-size:.9em;}
+.inv-table{margin-bottom:3mm;}
+.inv-table thead th{border-bottom:1px solid #000;font-weight:600;padding-bottom:1mm;}
+.inv-table th + th,.inv-table td + td{padding-left:2mm;}
+.inv-table tbody td{border-bottom:1px solid #bbb;padding-top:1mm;padding-bottom:1mm;}
+
+// Money, how to pay, and the footer.
+.inv-totals{margin-bottom:2mm;}
+.inv-total th,.inv-total td{font-weight:700;font-size:1.15em;}
+.inv-pay{border-top:1px dashed #000;padding-top:2mm;margin-bottom:2mm;}
+.inv-pay-title{font-weight:600;margin-bottom:1mm;}
+.inv-way{display:flex;gap:2mm;align-items:flex-start;margin-bottom:1.5mm;}
+.inv-way img{width:18mm;height:18mm;object-fit:contain;flex:0 0 auto;}
+.inv-info{white-space:pre-line;}
+.inv-foot{text-align:center;border-top:1px dashed #000;padding-top:2mm;white-space:pre-line;}
+
+// A5: the shop beside its logo, the title on the left, the totals to the right.
+.page .inv-shop{display:flex;gap:4mm;align-items:center;text-align:left;}
+.page .inv-logo{margin:0;}
+.page .inv-title{text-align:left;border:0;font-size:1.4em;padding:0;}
+.page .inv-meta{width:60%;}
+.page .inv-totals{width:60%;margin-left:auto;}
+
+// A quotation: who it is for beside its number and dates; the terms under the total.
+.inv-parties{display:flex;gap:8mm;justify-content:space-between;align-items:flex-start;margin-bottom:4mm;}
+.inv-for{flex:1;}
+.inv-parties .inv-meta{width:auto;margin-bottom:0;}
+.inv-terms{border-top:1px dashed #000;padding-top:2mm;margin-top:2mm;break-inside:avoid;}
+
+// A payment receipt: the invoices it paid off, then what is still owed.
+.inv-allocations{margin-top:1mm;}
+.inv-owed{border-top:1px dashed #000;padding-top:1mm;}

@@ -1,4 +1,4 @@
-<!-- v1.0.0 -->
+<!-- v1.0.2 -->
 @let d = doc();
 <div class="modal-head">
   <h3 id="grn-title">{{ d ? 'Stock in ' + d.number : 'New stock in' }}</h3>
@@ -28,7 +28,11 @@
   <div class="form-grid">
     <div class="field">
       <label for="grn-supplier">Supplier</label>
-      <select id="grn-supplier" formControlName="supplier" cdkFocusInitial>
+      <select
+        id="grn-supplier"
+        formControlName="supplier"
+        [attr.cdkFocusInitial]="editable() ? '' : null"
+      >
         <option [ngValue]="null" disabled>Choose a supplier…</option>
         @for (s of supplierOptions(); track s.id) {
           <option [ngValue]="s.id">{{ s.name }}</option>
@@ -215,7 +219,9 @@
               {{ line.quantity | qty }} <span class="muted">{{ line.unit_name }}</span>
             </td>
             <td class="r num">{{ line.unit_cost | usd: 4 }}</td>
-            <td class="r num">{{ line.line_total | usd }}</td>
+            <td class="r num" [class.neg]="line.line_total.startsWith('-')">
+              {{ line.line_total | usd }}
+            </td>
           </tr>
         }
       </tbody>
@@ -224,7 +230,7 @@
           <td colspan="7">
             {{ d?.lines?.length ?? 0 }} {{ d?.lines?.length === 1 ? 'line' : 'lines' }}
           </td>
-          <td class="r num">{{ d?.total | usd }}</td>
+          <td class="r num" [class.neg]="d?.total?.startsWith('-')">{{ d?.total | usd }}</td>
         </tr>
       </tfoot>
     </table>

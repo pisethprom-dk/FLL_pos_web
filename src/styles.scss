@@ -1,4 +1,4 @@
-// v1.2.0 — the app stylesheet: the agreed mockup's CSS
+// v1.3.0 — the app stylesheet: the agreed mockup's CSS
 // (../pos_backend/mock-up/pos-dashboard-mockup.html, v1.21.1), split by area.
 // Components use its class names and carry no styles of their own. Anything
 // added or changed from the mockup is marked where it happens.
@@ -16,3 +16,4 @@
 @use 'styles/auth';
 @use 'styles/print-preview';
 @use 'styles/stock';
+@use 'styles/print';

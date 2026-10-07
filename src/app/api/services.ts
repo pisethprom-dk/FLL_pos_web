@@ -8,3 +8,4 @@ export { InventoryService } from './services/inventory.service';
 export { PartnersService } from './services/partners.service';
 export { SalesService } from './services/sales.service';
 export { UsersService } from './services/users.service';
+export { WarrantyService } from './services/warranty.service';

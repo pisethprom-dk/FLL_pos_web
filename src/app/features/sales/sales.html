@@ -1,0 +1,153 @@
+<!-- v1.0.0 -->
+<div class="page">
+  <p class="page-intro">
+    Every sale completed at the till, and any voided since. A sale is never edited — a mistake is
+    voided the same day, or put right with a return.
+  </p>
+
+  <div class="filters">
+    <select aria-label="Period" (change)="setPeriod($any($event.target).value)">
+      @for (p of periods; track p.value) {
+        <option [value]="p.value" [selected]="period() === p.value">{{ p.label }}</option>
+      }
+    </select>
+    @if (period() === 'range') {
+      <input
+        type="date"
+        aria-label="From"
+        [value]="from()"
+        [max]="to() || today"
+        (change)="setFrom($any($event.target).value)"
+      />
+      <input
+        type="date"
+        aria-label="To"
+        [value]="to()"
+        [min]="from()"
+        [max]="today"
+        (change)="setTo($any($event.target).value)"
+      />
+    }
+    <select aria-label="Status" (change)="setStatus($any($event.target).value)">
+      <option value="all" [selected]="status() === 'all'">All statuses</option>
+      <option value="COMPLETED" [selected]="status() === 'COMPLETED'">Completed</option>
+      <option value="VOID" [selected]="status() === 'VOID'">Void</option>
+    </select>
+    <select aria-label="Sold by" (change)="setSoldBy($any($event.target).value)">
+      <option value="" [selected]="soldBy() === ''">Everyone</option>
+      <option value="me" [selected]="soldBy() === 'me'">Me</option>
+      @if (staff.hasValue()) {
+        @for (u of staff.value(); track u.id) {
+          <option [value]="u.id" [selected]="soldBy() === '' + u.id">{{ u.full_name }}</option>
+        }
+      }
+    </select>
+    <input
+      type="search"
+      aria-label="Search sales"
+      placeholder="Search invoice number or walk-in name"
+      (input)="type($any($event.target).value)"
+    />
+  </div>
+
+  @if (counts.hasValue()) {
+    <div class="tiles two">
+      <div class="tile">
+        <small>Sales today</small>
+        <b class="num">{{ counts.value().sold }}</b>
+        <div class="sub ok">Completed</div>
+      </div>
+      <div class="tile">
+        <small>Voided today</small>
+        <b class="num">{{ counts.value().voided }}</b>
+        <div class="sub" [class.alert]="counts.value().voided > 0">Stock went back</div>
+      </div>
+    </div>
+  }
+
+  @if (sales.error(); as error) {
+    <app-load-error [error]="error" (retry)="sales.reload()" />
+  } @else if (shown(); as list) {
+    <div class="panel">
+      <div class="panel-head">
+        <h3>Sales</h3>
+        <div class="spacer"></div>
+        @if (sales.isLoading()) {
+          <span class="muted" role="status">Updating…</span>
+        }
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>Number</th>
+            <th>Date</th>
+            <th>Customer</th>
+            <th>Sold by</th>
+            <th>Paid by</th>
+            <th class="r">Total</th>
+            <th>Status</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (sale of list.results; track sale.id) {
+            <tr>
+              <td class="num nowrap">{{ sale.number }}</td>
+              <td class="nowrap">{{ sale.sale_date | date: 'd MMM y, HH:mm' }}</td>
+              <td>
+                {{ sale.customer_name }}
+                @if (sale.walk_in_name) {
+                  <span class="cell-sub">{{ sale.walk_in_name }}</span>
+                } @else if (sale.quotation_number) {
+                  <span class="cell-sub num">From {{ sale.quotation_number }}</span>
+                }
+              </td>
+              <td>{{ sale.seller_name ?? '—' }}</td>
+              <td class="nowrap">
+                @for (kind of paidBy(sale); track kind) {
+                  <span
+                    class="pill"
+                    [class.credit]="kind === 'Credit'"
+                    [class.paid]="kind !== 'Credit'"
+                  >
+                    {{ kind }}
+                  </span>
+                }
+              </td>
+              <td class="r num">
+                {{ sale.total | usd }}
+                @if (sale.total_khr) {
+                  <span class="cell-sub">{{ sale.total_khr | khr }}</span>
+                }
+              </td>
+              <td>
+                @if (sale.status === 'VOID') {
+                  <span class="pill low">Void</span>
+                } @else {
+                  <span class="pill ok">Completed</span>
+                }
+              </td>
+              <td class="r">
+                <button type="button" class="rowlink" (click)="open(sale)">Open</button>
+              </td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="8" class="muted">No sale matches these filters.</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+      @if (list.count > list.results.length || page() > 1) {
+        <app-pager [count]="list.count" [page]="page()" (pageChange)="page.set($event)" />
+      } @else {
+        <div class="panel-note">
+          {{ list.count }} {{ list.count === 1 ? 'sale' : 'sales' }}. Held sales wait in the till's
+          Held sales until they are completed.
+        </div>
+      }
+    </div>
+  } @else {
+    <p class="loading">Loading…</p>
+  }
+</div>

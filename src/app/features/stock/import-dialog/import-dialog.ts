@@ -1,7 +1,8 @@
-// v1.0.0 — the mockup's "Import a product list", which nothing in the mockup
+// v1.1.0 — the mockup's "Import a product list", which nothing in the mockup
 // opened (a known gap). Two calls with the same file: the first checks every
 // row and adds nothing, the second adds the rows that passed. A row with a
-// problem is never imported — the file is fixed and loaded again.
+// problem is never imported — the file is fixed and loaded again. "Download
+// template" gives the header row to start from (owner's choice, 2026-10-06).
 import { DIALOG_DATA, DialogRef } from '@angular/cdk/dialog';
 import { Component, computed, inject, signal } from '@angular/core';
 import { Observable } from 'rxjs';
@@ -11,6 +12,7 @@ import { InventoryService } from '../../../api/services/inventory.service';
 import { readApiErrors } from '../../../shared/api-errors';
 import { QtyPipe, UsdPipe } from '../../../shared/money/money-pipes';
 import { costPlaces } from '../stock-common';
+import { importTemplate, templateCsv } from './import-template';
 
 export interface ImportDialogData {
   readonly kind: 'stock-in' | 'adjustment';
@@ -32,6 +34,7 @@ export class ImportDialog {
   protected readonly data = inject<ImportDialogData>(DIALOG_DATA);
   protected readonly ref = inject<DialogRef<'imported'>>(DialogRef);
   protected readonly costPlaces = costPlaces;
+  protected readonly template = importTemplate(this.data.kind, this.data.needsCost);
 
   protected readonly file = signal<File | null>(null);
   protected readonly hasHeader = signal(true);
@@ -41,6 +44,17 @@ export class ImportDialog {
   protected readonly busy = signal(false);
   protected readonly errors = signal<string[]>([]);
   protected readonly ready = computed(() => this.checked()?.ready ?? 0);
+
+  /** Saves the template to the user's computer, as a link to a file would. */
+  protected downloadTemplate(): void {
+    const blob = new Blob([templateCsv(this.template)], { type: 'text/csv;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = this.template.fileName;
+    link.click();
+    setTimeout(() => URL.revokeObjectURL(url));
+  }
 
   protected pickFile(input: HTMLInputElement): void {
     this.file.set(input.files?.[0] ?? null);

@@ -1,4 +1,4 @@
-// v1.2.0 — forms, fields and buttons.
+// v1.3.0 — forms, fields and buttons.
 // Changed: buttons and links in brand teal (option A, agreed 2026-10-05).
 .form{padding:18px;}
 .form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px 20px;}
@@ -18,7 +18,8 @@
   background:var(--surface);color:var(--ink);width:100%;
 }
 .field textarea{min-height:76px;resize:vertical;line-height:1.45;}
-.field input[readonly],.field select[disabled]{background:#F3F1EC;color:var(--muted);}
+// Changed: a disabled input or text area (a posted or accepted document) looks locked too.
+.field input[readonly],.field select[disabled],.field input:disabled,.field textarea:disabled{background:#F3F1EC;color:var(--muted);}
 .field .hint{font-size:12px;color:var(--muted);}
 .field .hint.warn{color:var(--warn);}
 .check{display:flex;align-items:flex-start;gap:9px;}

@@ -1,4 +1,4 @@
-<!-- v1.0.0 -->
+<!-- v1.1.0 -->
 <div class="modal-head">
   <h3 id="import-title">Import a product list into {{ data.number }}</h3>
   <div class="spacer"></div>
@@ -18,16 +18,22 @@
       />
       <span class="hint">
         @if (data.kind === 'stock-in') {
-          CSV or Excel. Columns: product code, quantity, unit cost; pack size and pack unit are
-          optional. With a pack size, quantity is the number of packs and unit cost the cost of one
+          CSV or Excel. Columns: Product code, Quantity, Unit cost; Pack size and Pack unit are
+          optional. With a pack size, Quantity is the number of packs and Unit cost the cost of one
           pack. Without one, the supplier's usual pack is used.
         } @else if (data.needsCost) {
-          CSV or Excel. Columns: product code, quantity, unit cost.
+          CSV or Excel. Columns: Product code, Quantity, Unit cost.
         } @else {
-          CSV or Excel. Columns: product code, quantity. A cost column is ignored — an adjustment
+          CSV or Excel. Columns: Product code, Quantity. A cost column is ignored — an adjustment
           goes at the current average.
         }
+        Product name is there to help you fill it in; the import reads the code.
       </span>
+      <div>
+        <button type="button" class="linkish" (click)="downloadTemplate()">
+          Download template ({{ template.fileName }})
+        </button>
+      </div>
     </div>
     <div class="field wide">
       <label class="check">

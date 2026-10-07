@@ -1,0 +1,25 @@
+<!-- v1.0.0 -->
+@let h = shop();
+<header class="inv-shop">
+  @if (h.logo) {
+    <img class="inv-logo" [src]="h.logo" alt="" />
+  }
+  <div class="inv-who">
+    <div class="inv-name">{{ h.name }}</div>
+    @if (khmer() && h.name_kh) {
+      <div class="inv-name-kh">{{ h.name_kh }}</div>
+    }
+    @if (h.address) {
+      <div>{{ h.address }}</div>
+    }
+    @if (h.phone) {
+      <div>{{ t('phone') }} {{ h.phone }}</div>
+    }
+    @if (h.vat_tin) {
+      <div>{{ t('vatTin') }} {{ h.vat_tin }}</div>
+    }
+    @if (headerLine() && h.receipt_header) {
+      <div class="inv-header">{{ h.receipt_header }}</div>
+    }
+  </div>
+</header>

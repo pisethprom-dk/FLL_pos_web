@@ -1,4 +1,4 @@
-// v1.3.0 — tables and status pills.
+// v1.4.0 — tables and status pills.
 table{width:100%;border-collapse:collapse;}
 th,td{padding:9px 18px;text-align:left;border-bottom:1px solid var(--line);font-size:13.5px;}
 thead th{font-weight:600;color:var(--muted);font-size:12.5px;background:#FBFAF7;}
@@ -8,6 +8,8 @@ tfoot td{font-weight:600;background:#FBFAF7;border-top:1px solid var(--line-stro
 .khr-cell{color:var(--khr);font-size:12.5px;}
 // Changed: a pill never breaks across lines ("Out of / stock").
 .pill{display:inline-block;padding:2px 8px;border-radius:10px;font-size:12px;font-weight:500;white-space:nowrap;}
+// Added: two pills side by side (a quote that is Accepted and Expired) keep apart.
+.pill + .pill{margin-left:5px;}
 .pill.paid{background:#E6F0EA;color:var(--good);}
 .pill.credit{background:#FBF3E2;color:var(--khr);}
 .pill.low{background:#F9E7E5;color:var(--warn);}

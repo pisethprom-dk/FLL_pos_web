@@ -10,9 +10,8 @@
  * * `STOCK_IN` - Stock in
  * * `ADJUSTMENT` - Adjustment
  * * `COUNT` - Stock count
- * * `WARRANTY` - Warranty claim
  * * `CUSTOMER` - Customer
  * * `SUPPLIER` - Supplier
  */
-export type DocTypeEnum = 'QUOTATION' | 'INVOICE' | 'PAYMENT' | 'RETURN' | 'STOCK_IN' | 'ADJUSTMENT' | 'COUNT' | 'WARRANTY' | 'CUSTOMER' | 'SUPPLIER';
+export type DocTypeEnum = 'QUOTATION' | 'INVOICE' | 'PAYMENT' | 'RETURN' | 'STOCK_IN' | 'ADJUSTMENT' | 'COUNT' | 'CUSTOMER' | 'SUPPLIER';
 

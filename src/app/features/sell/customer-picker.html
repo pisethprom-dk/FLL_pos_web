@@ -1,0 +1,66 @@
+<!-- v1.0.0 -->
+<div class="modal-head">
+  <h3 id="pick-customer-title">Choose customer</h3>
+  <div class="spacer"></div>
+  <button type="button" class="modal-x" aria-label="Close" (click)="ref.close()">&times;</button>
+</div>
+<div class="sheet-tools">
+  <input
+    type="search"
+    aria-label="Search customers"
+    placeholder="Search name, code or phone"
+    (input)="type($any($event.target).value)"
+    cdkFocusInitial
+  />
+</div>
+@if (found.error(); as error) {
+  <div class="form"><app-load-error [error]="error" (retry)="found.reload()" /></div>
+} @else {
+  <div class="lines-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Customer</th>
+          <th>Price</th>
+          <th>Credit</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (c of customers(); track c.id) {
+          @let pill = creditPill(c.credit_status);
+          <tr>
+            <td>
+              {{ c.name }}
+              <span class="cell-sub num">{{ c.code }}{{ c.phone ? ' · ' + c.phone : '' }}</span>
+            </td>
+            <td>{{ tierLabel(c.price_tier) }}</td>
+            <td>
+              <span
+                class="pill"
+                [class.ok]="pill.tone === 'ok'"
+                [class.low]="pill.tone === 'low'"
+                >{{ pill.label }}</span
+              >
+              @if (c.credit_status === 'HOLD') {
+                <span class="cell-sub">Cash only</span>
+              }
+            </td>
+            <td class="r">
+              <button type="button" class="rowlink" (click)="ref.close(c)">Select</button>
+            </td>
+          </tr>
+        } @empty {
+          <tr>
+            <td colspan="4" class="muted">
+              {{ found.isLoading() ? 'Looking…' : 'No active store customer matches.' }}
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+}
+<div class="form-foot">
+  <button class="btn ghost" type="button" (click)="ref.close()">Cancel</button>
+</div>

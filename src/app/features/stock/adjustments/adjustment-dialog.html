@@ -1,4 +1,4 @@
-<!-- v1.0.0 -->
+<!-- v1.0.1 -->
 @let d = doc();
 @let r = reason();
 <div class="modal-head">
@@ -29,7 +29,11 @@
   <div class="form-grid">
     <div class="field">
       <label for="adj-reason">Reason</label>
-      <select id="adj-reason" formControlName="reason" cdkFocusInitial>
+      <select
+        id="adj-reason"
+        formControlName="reason"
+        [attr.cdkFocusInitial]="editable() ? '' : null"
+      >
         <option [ngValue]="null" disabled>Choose a reason…</option>
         @for (option of reasons; track option.value) {
           <option [ngValue]="option.value">

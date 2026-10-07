@@ -1,0 +1,73 @@
+<!-- v1.0.0 -->
+@let inv = invoice;
+<div class="modal-head">
+  <h3 id="voided-title">Invoice {{ inv.number }} <span class="pill low">Void</span></h3>
+  <div class="spacer"></div>
+  <button type="button" class="modal-x" aria-label="Close" (click)="ref.close()">&times;</button>
+</div>
+<div class="form">
+  <div class="note" style="margin-bottom: 16px">
+    Voided {{ inv.voided_at | date: 'd MMM y, HH:mm' }} by {{ inv.voided_by_name ?? '—' }}. The
+    stock went back; the number stays, marked Void.
+  </div>
+  <div class="form-grid">
+    <div class="field">
+      <label for="vi-sold">Sold</label>
+      <input
+        id="vi-sold"
+        type="text"
+        [value]="(inv.sale_date | date: 'd MMM y, HH:mm') + ' · ' + (inv.seller_name ?? '—')"
+        readonly
+      />
+    </div>
+    <div class="field">
+      <label for="vi-customer">Customer</label>
+      <input
+        id="vi-customer"
+        type="text"
+        [value]="inv.customer_name + (inv.walk_in_name ? ' · ' + inv.walk_in_name : '')"
+        readonly
+      />
+    </div>
+    <div class="field wide">
+      <label for="vi-reason">Reason</label>
+      <input id="vi-reason" type="text" [value]="inv.void_reason" readonly />
+    </div>
+  </div>
+</div>
+<div class="lines-wrap">
+  <table>
+    <thead>
+      <tr>
+        <th>Product</th>
+        <th class="r">Qty</th>
+        <th class="r">Price</th>
+        <th class="r">Total</th>
+      </tr>
+    </thead>
+    <tbody>
+      @for (line of inv.lines ?? []; track line.id) {
+        <tr>
+          <td>
+            {{ line.product_name }}
+            <span class="cell-sub num">{{ line.product_code }}</span>
+          </td>
+          <td class="r num nowrap">
+            {{ line.quantity | qty }} <span class="muted">{{ line.unit_name }}</span>
+          </td>
+          <td class="r num">{{ line.net_price | usd }}</td>
+          <td class="r num">{{ line.line_total | usd }}</td>
+        </tr>
+      }
+    </tbody>
+    <tfoot>
+      <tr>
+        <td colspan="3">Total</td>
+        <td class="r num">{{ inv.total | usd }}</td>
+      </tr>
+    </tfoot>
+  </table>
+</div>
+<div class="form-foot">
+  <button class="btn ghost" type="button" (click)="ref.close()" cdkFocusInitial>Close</button>
+</div>

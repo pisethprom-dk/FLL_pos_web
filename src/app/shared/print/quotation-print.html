@@ -1,0 +1,87 @@
+<!-- v1.0.0 -->
+@let q = quote();
+<div class="inv page">
+  <app-print-shop [shop]="shop()" [headerLine]="false" />
+
+  <div class="inv-title">
+    {{ t('quotation') }}
+    @if (q.status === 'DRAFT') {
+      <span class="inv-copy">{{ t('draft') }}</span>
+    }
+  </div>
+  <div class="inv-parties">
+    <div class="inv-for">
+      <div class="inv-pay-title">{{ t('quotationFor') }}</div>
+      <div class="inv-name">{{ q.customer_name }}</div>
+      @if (q.customer_phone) {
+        <div>{{ t('phone') }} {{ q.customer_phone }}</div>
+      }
+      @if (q.customer_address) {
+        <div>{{ q.customer_address }}</div>
+      }
+    </div>
+    <table class="inv-meta">
+      <tbody>
+        <tr>
+          <th>{{ t('number') }}</th>
+          <td>{{ q.number }}</td>
+        </tr>
+        <tr>
+          <th>{{ t('date') }}</th>
+          <td>{{ q.quote_date | date: 'd MMM y' }}</td>
+        </tr>
+        <tr>
+          <th>{{ t('validUntil') }}</th>
+          <td>{{ q.valid_until | date: 'd MMM y' }}</td>
+        </tr>
+        @if (q.created_by_name) {
+          <tr>
+            <th>{{ t('preparedBy') }}</th>
+            <td>{{ q.created_by_name }}</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+
+  <table class="inv-table">
+    <thead>
+      <tr>
+        <th>{{ t('item') }}</th>
+        <th class="r">{{ t('qty') }}</th>
+        <th class="r">{{ t('price') }}</th>
+        <th class="r">{{ t('discount') }}</th>
+        <th class="r">{{ t('amount') }}</th>
+      </tr>
+    </thead>
+    <tbody>
+      @for (line of q.lines ?? []; track line.id) {
+        <tr>
+          <td>
+            {{ line.product_name }}
+            <span class="inv-code">{{ line.product_code }}</span>
+          </td>
+          <td class="r">{{ line.quantity | qty }} {{ line.unit_name }}</td>
+          <td class="r">{{ line.unit_price | usd }}</td>
+          <td class="r">{{ discount(line) ?? '' }}</td>
+          <td class="r">{{ line.line_total | usd }}</td>
+        </tr>
+      }
+    </tbody>
+  </table>
+  <table class="inv-totals">
+    <tbody>
+      <tr class="inv-total">
+        <th>{{ t('total') }}</th>
+        <td>{{ q.total | usd }}</td>
+      </tr>
+    </tbody>
+  </table>
+
+  @if (q.terms) {
+    <section class="inv-terms">
+      <div class="inv-pay-title">{{ t('terms') }}</div>
+      <div class="inv-info">{{ q.terms }}</div>
+    </section>
+  }
+</div>

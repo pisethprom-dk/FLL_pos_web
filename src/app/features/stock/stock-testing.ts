@@ -1,4 +1,4 @@
-// v1.0.0 — for the stock and supplier-link specs: documents, lookups and
+// v1.1.0 — for the stock and supplier-link specs: documents, lookups and
 // links as the API returns them, and a way to answer one URL by its params.
 import { HttpTestingController, TestRequest } from '@angular/common/http/testing';
 import { Adjustment } from '../../api/models/adjustment';
@@ -184,6 +184,7 @@ export const GRN_REVERSED: StockIn = {
   reversed_by_number: 'GRN-000314',
 };
 
+/** As the API sends a reversal: its figures turned, the way the goods went. */
 export const GRN_REVERSAL: StockIn = {
   ...GRN_POSTED,
   ...posted('2026-10-05'),
@@ -193,6 +194,8 @@ export const GRN_REVERSAL: StockIn = {
   note: 'Keyed twice',
   reverses: 312,
   reverses_number: 'GRN-000312',
+  total: '-314.40',
+  lines: [{ ...GRN_POSTED.lines![0], id: 903, quantity: '-6.00', line_total: '-314.40' }],
 };
 
 export const ADJ_DRAFT: Adjustment = {

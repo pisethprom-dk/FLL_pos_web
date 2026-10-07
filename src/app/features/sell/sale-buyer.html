@@ -1,0 +1,116 @@
+<!-- v1.0.0 -->
+<div class="who">
+  <div class="who-opts">
+    <label class="who-opt">
+      <input
+        type="radio"
+        name="buyer"
+        [checked]="sale.kind() === 'walkin'"
+        (click)="pick($event, 'walkin')"
+      />
+      <span><b>Walk-in</b><small>Name optional · retail price · pays now</small></span>
+    </label>
+    <label class="who-opt">
+      <input
+        type="radio"
+        name="buyer"
+        [checked]="sale.kind() === 'store'"
+        (click)="pick($event, 'store')"
+      />
+      <span
+        ><b>Store customer</b><small>Known customer · their price · may buy on credit</small></span
+      >
+    </label>
+    <label class="who-opt">
+      <input
+        type="radio"
+        name="buyer"
+        [checked]="sale.kind() === 'quote'"
+        (click)="pick($event, 'quote')"
+      />
+      <span
+        ><b>From a quotation</b><small>Accepted quote · agreed prices · may be partial</small></span
+      >
+    </label>
+  </div>
+
+  @switch (sale.kind()) {
+    @case ('walkin') {
+      <div class="who-row">
+        <div class="field who-main">
+          <label for="walkin-name">Customer name</label>
+          <input
+            id="walkin-name"
+            class="till-input text-left"
+            type="text"
+            maxlength="100"
+            placeholder="Optional — leave blank for an anonymous sale"
+            [value]="sale.walkInName()"
+            (input)="setName($any($event.target).value)"
+          />
+        </div>
+        <div class="field" style="flex: 0 1 180px">
+          <label for="walkin-phone">Phone</label>
+          <input
+            id="walkin-phone"
+            class="till-input text-left"
+            type="text"
+            inputmode="tel"
+            maxlength="30"
+            placeholder="Optional"
+            [value]="sale.walkInPhone()"
+            (input)="setPhone($any($event.target).value)"
+          />
+        </div>
+      </div>
+      <div class="who-hint">
+        Recorded against the Walk-in customer record. Retail prices apply and credit is not offered.
+      </div>
+    }
+    @case ('store') {
+      <div class="who-row">
+        <div class="who-main">
+          @if (sale.store(); as c) {
+            <div class="name">
+              {{ c.name }} <span class="tag">{{ tierLabel(c.tier) }}</span>
+            </div>
+            <div class="meta">
+              {{ c.code }}{{ c.phone ? ' · ' + c.phone : ''
+              }}{{ standing() ? ' · ' + standing() : '' }}
+            </div>
+          } @else {
+            <div class="meta">No customer chosen yet.</div>
+          }
+        </div>
+        <button class="btn ghost" type="button" (click)="customerChange.emit()">
+          {{ sale.store() ? 'Change customer' : 'Choose customer' }}
+        </button>
+      </div>
+    }
+    @case ('quote') {
+      <div class="who-row">
+        <div class="who-main">
+          @if (sale.quote(); as q) {
+            <div class="name">
+              {{ q.number }} · {{ q.customerName }} <span class="tag">{{ tierLabel(q.tier) }}</span>
+            </div>
+            <div class="meta" [class.neg]="q.expired">
+              Valid until {{ q.validUntil | date: 'd MMM y'
+              }}{{ q.expired ? ' — expired; it can still be invoiced' : ''
+              }}{{ standing() ? ' · ' + standing() : '' }}
+            </div>
+          } @else {
+            <div class="meta">No quotation chosen yet.</div>
+          }
+        </div>
+        <button class="btn ghost" type="button" (click)="quoteChange.emit()">
+          {{ sale.quote() ? 'Change quotation' : 'Choose quotation' }}
+        </button>
+      </div>
+      <div class="who-hint">
+        The lines are the quantities still to invoice, at the prices agreed on the quote. Removing a
+        line leaves it on the quote for next time.
+      </div>
+    }
+  }
+</div>

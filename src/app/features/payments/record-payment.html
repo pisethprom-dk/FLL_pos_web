@@ -1,0 +1,195 @@
+<!-- v1.1.0 -->
+<div class="modal-head">
+  <h3 id="pay-title">Record a payment</h3>
+  <div class="spacer"></div>
+  <button type="button" class="modal-x" aria-label="Close" (click)="ref.close()">&times;</button>
+</div>
+<div class="form" [formGroup]="form">
+  <div class="form-grid">
+    <div class="field wide">
+      <span class="label-like">Customer</span>
+      <div class="picked">
+        @if (customer(); as c) {
+          <b>{{ c.name }}</b>
+          <span class="muted num">{{ c.code }}</span>
+          @if (owes(); as balance) {
+            <span class="muted">owes {{ balance | usd }}</span>
+          }
+        } @else {
+          <span class="muted">No customer chosen yet.</span>
+        }
+        <button type="button" class="rowlink" (click)="pickCustomer()" cdkFocusInitial>
+          {{ customer() ? 'Change' : 'Choose customer' }}
+        </button>
+      </div>
+    </div>
+    <div class="field">
+      <label for="pay-date">Date</label>
+      <input id="pay-date" type="date" formControlName="payment_date" [max]="today" />
+      @for (message of errorsFor('payment_date'); track $index) {
+        <span class="hint warn">{{ message }}</span>
+      }
+    </div>
+    <div class="field">
+      <label for="pay-tender">Tender</label>
+      <select id="pay-tender" formControlName="tender">
+        @for (t of tenders; track t.value) {
+          <option [value]="t.value">{{ t.label }}</option>
+        }
+      </select>
+    </div>
+    <div class="field">
+      <label for="pay-currency">Currency</label>
+      <select id="pay-currency" formControlName="currency">
+        <option value="USD">USD</option>
+        <option value="KHR">KHR</option>
+      </select>
+    </div>
+    <div class="field">
+      <label for="pay-amount">Amount received</label>
+      <input id="pay-amount" type="text" inputmode="decimal" formControlName="amount" />
+      @if (form.controls.currency.value === 'KHR') {
+        <span class="hint">
+          @if (rate(); as r) {
+            {{ received() | usd }} at ៛{{ r | rate }}, the rate on that date.
+          } @else {
+            No exchange rate on that date.
+          }
+        </span>
+      }
+      @if (form.controls.amount.touched && form.controls.amount.invalid) {
+        <span class="hint warn">
+          {{
+            form.controls.currency.value === 'KHR'
+              ? 'Whole riel, above zero.'
+              : 'Dollars and cents, above zero.'
+          }}
+        </span>
+      }
+      @for (message of errorsFor('amount_tendered'); track $index) {
+        <span class="hint warn">{{ message }}</span>
+      }
+    </div>
+    <div class="field">
+      <label for="pay-ref">Reference</label>
+      <input
+        id="pay-ref"
+        type="text"
+        formControlName="reference"
+        placeholder="Transaction reference, if any"
+      />
+    </div>
+    <div class="field">
+      <label for="pay-number">Number</label>
+      <input id="pay-number" type="text" value="Given on save" readonly />
+    </div>
+    <div class="field wide">
+      <label for="pay-note">Note</label>
+      <textarea id="pay-note" formControlName="note" rows="2"></textarea>
+    </div>
+  </div>
+</div>
+@if (customer()) {
+  <div class="lines-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th style="width: 34px"></th>
+          <th>Invoice</th>
+          <th>Due</th>
+          <th class="r">Owes</th>
+          <th class="r">Applying</th>
+          <th>Leaves</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (row of rows(); track row.invoice.id; let i = $index) {
+          @let problem = rowProblem(row);
+          @let rest = leaves(row);
+          <tr>
+            <td class="tick">
+              <input
+                #box
+                type="checkbox"
+                [checked]="row.ticked"
+                [attr.aria-label]="'Apply to ' + row.invoice.number"
+                (change)="tick(i, box.checked)"
+              />
+            </td>
+            <td class="num nowrap">
+              {{ row.invoice.number }}
+              <span class="cell-sub">{{ row.invoice.sale_date | date: 'd MMM y' }}</span>
+            </td>
+            <td class="nowrap" [class.neg]="row.invoice.overdue">
+              {{ row.invoice.due_date ? (row.invoice.due_date | date: 'd MMM y') : '—' }}
+            </td>
+            <td class="r num">{{ row.invoice.balance | usd }}</td>
+            <td class="r">
+              <input
+                class="till-input w-disc"
+                type="text"
+                inputmode="decimal"
+                [value]="row.amount"
+                [class.locked]="!row.ticked"
+                [class.bad]="!!problem"
+                [attr.aria-label]="'Applying to ' + row.invoice.number"
+                (input)="setAmount(i, $any($event.target).value)"
+              />
+              @if (problem) {
+                <span class="cell-note" role="alert">{{ problem }}</span>
+              }
+            </td>
+            <td>
+              @if (!row.ticked) {
+                <span class="pill credit">Untouched</span>
+              } @else if (rest === '0.00') {
+                <span class="pill ok">Settled</span>
+              } @else if (rest) {
+                <span class="pill credit">{{ rest | usd }} left</span>
+              }
+            </td>
+          </tr>
+        } @empty {
+          <tr>
+            <td colspan="6" class="muted">
+              {{ account.isLoading() ? 'Looking…' : 'This customer owes nothing.' }}
+            </td>
+          </tr>
+        }
+      </tbody>
+      <tfoot>
+        <tr>
+          <td colspan="4">Received {{ received() | usd }}</td>
+          <td class="r num">{{ applied() | usd }}</td>
+          <td [class.neg]="left() !== null && left() !== '0.00'">
+            {{ left() | usd }} left to apply
+          </td>
+        </tr>
+      </tfoot>
+    </table>
+  </div>
+}
+<div class="form">
+  <div class="form-grid one">
+    <div class="field">
+      <span class="hint" [class.warn]="!!blocker()">
+        {{
+          blocker() ||
+            'Applied in full: what is left to apply has reached zero. The invoices are not edited — their balance is what they were raised for, less what is paid.'
+        }}
+      </span>
+    </div>
+  </div>
+  @for (message of errors(); track $index) {
+    <p class="form-error" role="alert">{{ message }}</p>
+  }
+</div>
+<div class="form-foot">
+  <button class="btn" type="button" [disabled]="busy() || !!blocker()" (click)="save()">
+    {{ busy() ? 'Saving…' : 'Save payment' }}
+  </button>
+  <button class="btn ghost" type="button" [disabled]="busy() || !!blocker()" (click)="save(true)">
+    Save and print receipt
+  </button>
+  <button class="btn ghost" type="button" (click)="ref.close()">Cancel</button>
+</div>

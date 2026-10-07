@@ -1,0 +1,177 @@
+<!-- v1.0.0 -->
+<div class="page">
+  <p class="page-intro">
+    A void cancels an invoice raised in error. A return takes goods back after the customer has
+    left. Neither edits the original — both are their own document.
+  </p>
+
+  <div class="note">
+    A Seller may void their own invoice on the day it was raised; an Admin, any. After that, or once
+    a payment or a return is recorded against it, the correction is a return.
+  </div>
+
+  <div class="filters">
+    <select aria-label="Show" (change)="setKind($any($event.target).value)">
+      <option value="returns" [selected]="kind() === 'returns'">Returns</option>
+      <option value="voids" [selected]="kind() === 'voids'">Voided invoices</option>
+    </select>
+    <select aria-label="Period" (change)="setPeriod($any($event.target).value)">
+      @for (p of periods; track p.value) {
+        <option [value]="p.value" [selected]="period() === p.value">{{ p.label }}</option>
+      }
+    </select>
+    <select aria-label="Customer" (change)="setCustomer($any($event.target).value)">
+      <option value="">All customers</option>
+      @if (customers.hasValue()) {
+        @for (c of customers.value(); track c.id) {
+          <option [value]="c.id" [selected]="customer() === c.id">
+            {{ c.short_name || c.name }}
+          </option>
+        }
+      }
+    </select>
+    @if (kind() === 'returns') {
+      <select aria-label="Status" (change)="setStatus($any($event.target).value)">
+        <option value="all" [selected]="status() === 'all'">All statuses</option>
+        <option value="DRAFT" [selected]="status() === 'DRAFT'">Draft</option>
+        <option value="POSTED" [selected]="status() === 'POSTED'">Posted</option>
+      </select>
+    }
+    <button *hasScope="'return.create'" class="btn" type="button" (click)="newReturn()">
+      New return
+    </button>
+    <button
+      *hasScope="['invoice.void.any', 'invoice.void.own']"
+      class="btn ghost"
+      type="button"
+      (click)="voidInvoice()"
+    >
+      Void an invoice
+    </button>
+  </div>
+
+  @if (counts.hasValue()) {
+    <div class="tiles two">
+      <div class="tile">
+        <small>Returns this month</small>
+        <b class="num">{{ counts.value().returns }}</b>
+        <div class="sub">Posted</div>
+      </div>
+      <div class="tile">
+        <small>Voided this month</small>
+        <b class="num">{{ counts.value().voids }}</b>
+        <div class="sub">By the date sold</div>
+      </div>
+    </div>
+  }
+
+  @if (current().error(); as error) {
+    <app-load-error [error]="error" (retry)="current().reload()" />
+  } @else if (kind() === 'returns' ? shownReturns() : shownVoids(); as list) {
+    <div class="panel">
+      <div class="panel-head">
+        <h3>{{ kind() === 'returns' ? 'Returns' : 'Voided invoices' }}</h3>
+        <div class="spacer"></div>
+        @if (current().isLoading()) {
+          <span class="muted" role="status">Updating…</span>
+        }
+      </div>
+      @if (kind() === 'returns' && shownReturns(); as returns) {
+        <table>
+          <thead>
+            <tr>
+              <th>Number</th>
+              <th>Date</th>
+              <th>Against</th>
+              <th>Customer</th>
+              <th>Reason</th>
+              <th class="r">Value</th>
+              <th>Settled by</th>
+              <th>Status</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (ret of returns.results; track ret.id) {
+              <tr>
+                <td class="num nowrap">{{ ret.number }}</td>
+                <td class="nowrap">{{ ret.return_date | date: 'd MMM y' }}</td>
+                <td class="num nowrap">{{ ret.invoice_number }}</td>
+                <td>{{ ret.customer_name }}</td>
+                <td class="muted">{{ ret.reason }}</td>
+                <td class="r num">
+                  {{ (ret.status === 'POSTED' ? ret.total : ret.draft_total) | usd }}
+                </td>
+                <td>{{ settledBy(ret) }}</td>
+                <td>
+                  @if (ret.status === 'POSTED') {
+                    <span class="pill ok">Posted</span>
+                  } @else {
+                    <span class="pill credit">Draft</span>
+                  }
+                </td>
+                <td class="r">
+                  <button type="button" class="rowlink" (click)="openReturn(ret)">Open</button>
+                </td>
+              </tr>
+            } @empty {
+              <tr>
+                <td colspan="9" class="muted">No return matches these filters.</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      } @else if (shownVoids(); as voids) {
+        <table>
+          <thead>
+            <tr>
+              <th>Number</th>
+              <th>Sold</th>
+              <th>Customer</th>
+              <th>Reason</th>
+              <th class="r">Total</th>
+              <th>Voided by</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (inv of voids.results; track inv.id) {
+              <tr>
+                <td class="num nowrap">{{ inv.number }}</td>
+                <td class="nowrap">{{ inv.sale_date | date: 'd MMM y' }}</td>
+                <td>{{ inv.walk_in_name || inv.customer_name }}</td>
+                <td class="muted">{{ inv.void_reason }}</td>
+                <td class="r num">{{ inv.total | usd }}</td>
+                <td>
+                  {{ inv.voided_by_name ?? '—' }}
+                  <span class="cell-sub">{{ inv.voided_at | date: 'd MMM y, HH:mm' }}</span>
+                </td>
+                <td class="r">
+                  <button type="button" class="rowlink" (click)="openVoid(inv)">Open</button>
+                </td>
+              </tr>
+            } @empty {
+              <tr>
+                <td colspan="7" class="muted">No voided invoice matches these filters.</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      }
+      @if (list.count > list.results.length || page() > 1) {
+        <app-pager [count]="list.count" [page]="page()" (pageChange)="page.set($event)" />
+      } @else {
+        <div class="panel-note">
+          @if (kind() === 'returns') {
+            Goods marked fit to sell go back into stock at the cost they left at. A faulty item
+            never goes back into stock, so there is nothing to write off.
+          } @else {
+            A voided invoice keeps its number, marked Void; its stock went back.
+          }
+        </div>
+      }
+    </div>
+  } @else {
+    <p class="loading">Loading…</p>
+  }
+</div>

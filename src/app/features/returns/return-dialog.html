@@ -1,0 +1,265 @@
+<!-- v1.0.0 -->
+@let d = doc();
+@let inv = invoice();
+<div class="modal-head">
+  <h3 id="return-title">{{ d ? 'Return ' + d.number : 'New return' }}</h3>
+  <div class="spacer"></div>
+  <button type="button" class="modal-x" aria-label="Close" (click)="close()">&times;</button>
+</div>
+<div class="form" [formGroup]="form">
+  <div class="note" style="margin-bottom: 16px">
+    @if (d?.status === 'POSTED') {
+      Posted {{ d!.posted_at | date: 'd MMM y, HH:mm' }}. A posted return cannot be undone.
+    } @else {
+      Draft — nothing has come back into stock yet. Posting takes the goods back and settles the
+      value.
+    }
+  </div>
+  <div class="form-grid">
+    <div class="field wide">
+      <span class="label-like">Against invoice</span>
+      <div class="picked">
+        @if (inv) {
+          <b class="num">{{ inv.number }}</b>
+          <span class="muted">{{ inv.sale_date | date: 'd MMM y' }}</span>
+          <span>{{ inv.customer_name }}{{ inv.walk_in_name ? ' · ' + inv.walk_in_name : '' }}</span>
+        } @else if (d) {
+          <b class="num">{{ d.invoice_number }}</b>
+          <span>{{ d.customer_name }}</span>
+        } @else {
+          <span class="muted">No invoice chosen yet.</span>
+        }
+        @if (!d && editable()) {
+          <button type="button" class="rowlink" (click)="chooseInvoice()" cdkFocusInitial>
+            {{ inv ? 'Change' : 'Choose invoice' }}
+          </button>
+        }
+      </div>
+      @if (invoiceError()) {
+        <span class="hint warn"
+          >The invoice could not be loaded. Close and open the draft again.</span
+        >
+      }
+    </div>
+    <div class="field">
+      <label for="ret-date">Date</label>
+      <input id="ret-date" type="date" formControlName="return_date" [max]="today" />
+      @for (message of errorsFor('return_date'); track $index) {
+        <span class="hint warn">{{ message }}</span>
+      }
+    </div>
+    <div class="field">
+      <label for="ret-number">Number</label>
+      <input id="ret-number" type="text" [value]="d?.number ?? 'Given on save'" readonly />
+    </div>
+    <div class="field wide">
+      <label for="ret-reason">Reason</label>
+      <input
+        id="ret-reason"
+        type="text"
+        formControlName="reason"
+        placeholder="Wrong size, unopened"
+      />
+      @if (form.controls.reason.touched && form.controls.reason.invalid) {
+        <span class="hint warn">Say why the goods came back.</span>
+      }
+      @for (message of errorsFor('reason'); track $index) {
+        <span class="hint warn">{{ message }}</span>
+      }
+    </div>
+  </div>
+</div>
+
+<div class="lines-wrap">
+  <table>
+    <thead>
+      <tr>
+        @if (editable()) {
+          <th style="width: 34px"></th>
+        }
+        <th>Product</th>
+        <th class="r">Sold</th>
+        @if (editable()) {
+          <th class="r">Already back</th>
+        }
+        <th class="r">Returning</th>
+        <th class="r">Price</th>
+        <th class="r">Value</th>
+        <th>Back into stock</th>
+      </tr>
+    </thead>
+    <tbody>
+      @if (editable()) {
+        @for (row of rows(); track row.line.id; let i = $index) {
+          @let bad = problem(row);
+          @let none = row.left === '0.00' || row.left.startsWith('-');
+          <tr [class.muted]="none">
+            <td class="tick">
+              <input
+                #box
+                type="checkbox"
+                [checked]="row.ticked"
+                [disabled]="none"
+                [attr.aria-label]="'Return ' + row.line.product_code"
+                (change)="tick(i, box.checked)"
+              />
+            </td>
+            <td>
+              {{ row.line.product_name }}
+              <span class="cell-sub num">{{ row.line.product_code }}</span>
+            </td>
+            <td class="r num">{{ row.line.quantity | qty }}</td>
+            <td class="r num">{{ row.line.qty_returned | qty }}</td>
+            <td class="r">
+              @if (none) {
+                <span class="muted">All back</span>
+              } @else {
+                <input
+                  class="till-input w-qty"
+                  type="text"
+                  inputmode="decimal"
+                  [value]="row.qty"
+                  [readonly]="!row.ticked"
+                  [class.locked]="!row.ticked"
+                  [class.bad]="!!bad"
+                  [attr.aria-label]="'Returning, ' + row.line.product_code"
+                  (input)="setQty(i, $any($event.target).value)"
+                />
+                @if (bad) {
+                  <span class="cell-note" role="alert">{{ bad }}</span>
+                }
+              }
+            </td>
+            <td class="r num">{{ row.line.net_price | usd }}</td>
+            <td class="r num">{{ lineValue(row) | usd }}</td>
+            <td>
+              <select
+                class="till-input text"
+                [disabled]="!row.ticked"
+                [attr.aria-label]="'Back into stock, ' + row.line.product_code"
+                (change)="setFit(i, $any($event.target).value)"
+              >
+                <option value="yes" [selected]="row.fit">Yes — fit to sell</option>
+                <option value="no" [selected]="!row.fit">No — faulty</option>
+              </select>
+            </td>
+          </tr>
+        } @empty {
+          <tr>
+            <td colspan="8" class="muted">Choose the invoice; its lines are listed here.</td>
+          </tr>
+        }
+      } @else {
+        @for (line of d?.lines ?? []; track line.id) {
+          <tr>
+            <td>
+              {{ line.product_name }}
+              <span class="cell-sub num">{{ line.product_code }}</span>
+            </td>
+            <td class="r num">{{ line.sold | qty }}</td>
+            <td class="r num">{{ line.quantity | qty }}</td>
+            <td class="r num">{{ line.unit_price | usd }}</td>
+            <td class="r num">{{ line.line_total | usd }}</td>
+            <td>{{ line.fit_to_sell === false ? 'No — faulty' : 'Yes — fit to sell' }}</td>
+          </tr>
+        }
+      }
+    </tbody>
+    <tfoot>
+      <tr>
+        @if (editable()) {
+          <td colspan="6">{{ ticked() }} {{ ticked() === 1 ? 'line' : 'lines' }} returning</td>
+          <td class="r num">{{ total() | usd }}</td>
+        } @else {
+          <td colspan="4">
+            {{ d?.lines?.length ?? 0 }} {{ d?.lines?.length === 1 ? 'line' : 'lines' }} returned
+          </td>
+          <td class="r num">{{ d?.total | usd }}</td>
+        }
+        <td></td>
+      </tr>
+    </tfoot>
+  </table>
+</div>
+
+<div class="form" [formGroup]="form">
+  <div class="form-grid">
+    @if (editable()) {
+      @let s = settles();
+      <div class="field">
+        <label for="ret-credited">Off what the invoice still owes</label>
+        <input id="ret-credited" type="text" [value]="s ? (s.credited | usd) : '—'" readonly />
+        @if (owed(); as o) {
+          <span class="hint">{{ inv?.number }} owes {{ o | usd }}.</span>
+        }
+      </div>
+      <div class="field">
+        <label for="ret-refunded">Refunded</label>
+        <input id="ret-refunded" type="text" [value]="s ? (s.refunded | usd) : '—'" readonly />
+      </div>
+      @if (refunding()) {
+        <div class="field">
+          <label for="ret-refund">Refund by</label>
+          <select id="ret-refund" formControlName="refund_method">
+            <option value="" disabled>Choose…</option>
+            @for (r of refunds; track r.value) {
+              <option [value]="r.value">{{ r.label }}</option>
+            }
+          </select>
+          @for (message of errorsFor('refund_method'); track $index) {
+            <span class="hint warn">{{ message }}</span>
+          }
+        </div>
+      }
+      <div class="field wide">
+        <span class="hint" [class.warn]="!!blocker()">
+          {{
+            blocker() ||
+              'Goods marked fit to sell go back into stock at the cost they left at, not today’s average. A faulty item does not go back into stock. The figures are worked out as you go; the server’s replace them when the return is posted.'
+          }}
+        </span>
+      </div>
+    } @else if (d) {
+      <div class="field">
+        <label for="ret-credited">Off what the invoice owed</label>
+        <input id="ret-credited" type="text" [value]="d.credited | usd" readonly />
+      </div>
+      <div class="field">
+        <label for="ret-refunded">Refunded</label>
+        <input
+          id="ret-refunded"
+          type="text"
+          [value]="
+            (d.refunded | usd) +
+            (d.refund_method ? ' · ' + (d.refund_method === 'KHQR' ? 'KHQR' : 'Cash') : '')
+          "
+          readonly
+        />
+      </div>
+    }
+  </div>
+  @for (message of errors(); track $index) {
+    <p class="form-error" role="alert">{{ message }}</p>
+  }
+</div>
+<div class="form-foot">
+  @if (editable()) {
+    <button class="btn" type="button" [disabled]="busy() || !!blocker()" (click)="post()">
+      Post return
+    </button>
+    <button class="btn ghost" type="button" [disabled]="busy()" (click)="saveDraft()">
+      Save draft
+    </button>
+    @if (busy()) {
+      <span class="muted" role="status">Working…</span>
+    }
+    @if (d) {
+      <div class="spacer"></div>
+      <button class="btn danger" type="button" [disabled]="busy()" (click)="deleteDraft()">
+        Delete draft
+      </button>
+    }
+  } @else {
+    <button class="btn ghost" type="button" (click)="close()" cdkFocusInitial>Close</button>
+  }
+</div>

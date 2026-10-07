@@ -27,6 +27,11 @@ export interface SalesInvoicesList$Params {
   date_to?: string;
 
 /**
+ * false: leave out held sales, which have no number or date yet; true: held sales only.
+ */
+  held?: 'false' | 'true';
+
+/**
  * A page number within the paginated result set.
  */
   page?: number;
@@ -58,6 +63,7 @@ export function salesInvoicesList(http: HttpClient, rootUrl: string, params?: Sa
     rb.query('customer', params.customer, {});
     rb.query('date_from', params.date_from, {});
     rb.query('date_to', params.date_to, {});
+    rb.query('held', params.held, {});
     rb.query('page', params.page, {});
     rb.query('quotation', params.quotation, {});
     rb.query('search', params.search, {});

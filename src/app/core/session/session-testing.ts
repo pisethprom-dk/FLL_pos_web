@@ -1,4 +1,4 @@
-// v1.2.0 — for specs: the two roles as /api/auth/ returns them (scopes copied
+// v1.4.0 — for specs: the two roles as /api/auth/ returns them (scopes copied
 // from the backend's users/scopes.py), and a way to sign one in.
 import { HttpTestingController } from '@angular/common/http/testing';
 import { CompanyBrand } from '../../api/models/company-brand';
@@ -44,11 +44,13 @@ export const ADMIN: Me = {
     'quotation.edit',
     'payment.view',
     'payment.record',
+    'payment.void',
     'return.view',
     'return.create',
     'invoice.void.any',
     'warranty.view',
     'warranty.edit',
+    'warranty.delete',
     'stock.view',
     'stock.post',
     'catalogue.view',

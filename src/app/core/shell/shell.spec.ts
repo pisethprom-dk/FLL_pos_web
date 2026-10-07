@@ -1,4 +1,4 @@
-// v1.6.0
+// v1.12.0
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
@@ -59,6 +59,8 @@ describe('Shell', () => {
     expect(menu(page)).toEqual([
       'Dashboard',
       'Sell',
+      'Till',
+      'Sales',
       'Quotations',
       'Customer payment',
       'Returns & voids',
@@ -83,6 +85,8 @@ describe('Shell', () => {
     expect(menu(page)).toEqual([
       'Dashboard',
       'Sell',
+      'Till',
+      'Sales',
       'Quotations',
       'Customer payment',
       'Returns & voids',
@@ -119,9 +123,15 @@ describe('Shell', () => {
     expect(dashboard.textContent!.trim()).toBe('Dashboard');
     expect(dashboard.getAttribute('href')).toBe('/');
     expect(dashboard.getAttribute('aria-current')).toBe('page');
-    // A Seller opens the dashboard, the catalogue and the partners; the rest are greyed.
+    // A Seller opens the dashboard, the operations built so far, the catalogue and the partners; the rest are greyed.
     expect(texts(page, '.nav a')).toEqual([
       'Dashboard',
+      'Till',
+      'Sales',
+      'Quotations',
+      'Customer payment',
+      'Returns & voids',
+      'Warranty claims',
       'Products',
       'Categories',
       'Brands',
@@ -167,7 +177,9 @@ describe('Shell', () => {
   it('folds a group away and back', async () => {
     signIn(store, http, SELLER);
     const page = await open();
-    const catalogue = page.querySelector<HTMLButtonElement>('.nav button.grp')!;
+    const catalogue = page.querySelector<HTMLButtonElement>(
+      '.nav button[aria-controls="grp-catalogue"]',
+    )!;
     const group = page.querySelector<HTMLElement>('#grp-catalogue')!;
 
     expect(catalogue.getAttribute('aria-expanded')).toBe('true');
