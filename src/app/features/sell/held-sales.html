@@ -1,0 +1,56 @@
+<!-- v1.0.0 -->
+<div class="modal-head">
+  <h3 id="held-title">Held sales</h3>
+  <div class="spacer"></div>
+  <button type="button" class="modal-x" aria-label="Close" (click)="close()">&times;</button>
+</div>
+@if (held.error(); as error) {
+  <div class="form"><app-load-error [error]="error" (retry)="held.reload()" /></div>
+} @else if (held.hasValue()) {
+  <div class="lines-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Label</th>
+          <th>Buyer</th>
+          <th class="r">Lines</th>
+          <th class="r">Total</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (sale of held.value().results; track sale.id) {
+          <tr>
+            <td>{{ sale.hold_label || '—' }}</td>
+            <td>
+              {{ buyer(sale) }}
+              @if (sale.quotation_number) {
+                <span class="cell-sub">From {{ sale.quotation_number }}</span>
+              }
+            </td>
+            <td class="r num">{{ sale.lines?.length ?? 0 }}</td>
+            <td class="r num">{{ sale.held_total | usd }}</td>
+            <td class="r nowrap">
+              <button type="button" class="rowlink" (click)="ref.close(sale)">Resume</button>
+              <button type="button" class="rowlink gap-left" (click)="remove(sale)">Delete</button>
+            </td>
+          </tr>
+        } @empty {
+          <tr>
+            <td colspan="5" class="muted">No sale is held.</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+} @else {
+  <p class="loading">Loading…</p>
+}
+@for (message of errors(); track $index) {
+  <div class="form">
+    <p class="form-error" role="alert">{{ message }}</p>
+  </div>
+}
+<div class="form-foot">
+  <button class="btn ghost" type="button" (click)="close()">Close</button>
+</div>

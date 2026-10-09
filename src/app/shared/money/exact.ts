@@ -1,11 +1,16 @@
-// v1.0.0 — exact decimal arithmetic for previews (owner's choice, 2026-10-05).
+// v1.1.0 — exact decimal arithmetic for previews (owner's choice, 2026-10-05).
 // A screen may show what a line will come to while it is typed — a stock-in's
 // unit cost and line total, the till's totals — using the backend's own rules:
 // whole digits held as BigInt, never a float, and halves rounded away from
-// zero (Python's ROUND_HALF_UP). The server's figures replace the preview once
-// the document is saved; what prints is what the API returned.
+// zero (Python's ROUND_HALF_UP) unless a figure says otherwise. A sale line's
+// total is one that does: the backend rounds `net × qty` with Python's default,
+// half to even. The server's figures replace the preview once the document is
+// saved; what prints is what the API returned.
 
 const DECIMAL = /^([+-]?)(\d+)(?:\.(\d+))?$/;
+
+/** How a half is rounded: away from zero (ROUND_HALF_UP), or to the even digit (ROUND_HALF_EVEN). */
+export type Rounding = 'half-up' | 'half-even';
 
 /** `units` scaled down by 10^places: 1.10 is { units: 110n, places: 2 }. */
 interface Exact {
@@ -24,19 +29,20 @@ function parse(text: string): Exact | null {
 const TEN = 10n;
 const pow10 = (n: number): bigint => TEN ** BigInt(n);
 
-/** n / d rounded half away from zero. */
-function divide(n: bigint, d: bigint): bigint {
+/** n / d, with a half rounded as `rounding` says. */
+function divide(n: bigint, d: bigint, rounding: Rounding = 'half-up'): bigint {
   const negative = n < 0n !== d < 0n;
   const an = n < 0n ? -n : n;
   const ad = d < 0n ? -d : d;
   let q = an / ad;
-  if ((an % ad) * 2n >= ad) q += 1n;
+  const twice = (an % ad) * 2n;
+  if (twice > ad || (twice === ad && (rounding === 'half-up' || q % 2n === 1n))) q += 1n;
   return negative ? -q : q;
 }
 
-function rescale(x: Exact, places: number): Exact {
+function rescale(x: Exact, places: number, rounding: Rounding = 'half-up'): Exact {
   if (places >= x.places) return { units: x.units * pow10(places - x.places), places };
-  return { units: divide(x.units, pow10(x.places - places)), places };
+  return { units: divide(x.units, pow10(x.places - places), rounding), places };
 }
 
 function text(x: Exact): string {
@@ -49,11 +55,16 @@ function text(x: Exact): string {
 }
 
 /** a × b, rounded to `places`. Null when either is not a plain decimal. */
-export function times(a: string, b: string, places: number): string | null {
+export function times(
+  a: string,
+  b: string,
+  places: number,
+  rounding: Rounding = 'half-up',
+): string | null {
   const x = parse(a);
   const y = parse(b);
   if (!x || !y) return null;
-  return text(rescale({ units: x.units * y.units, places: x.places + y.places }, places));
+  return text(rescale({ units: x.units * y.units, places: x.places + y.places }, places, rounding));
 }
 
 /** a ÷ b, rounded to `places`. Null when either is not a plain decimal, or b is zero. */
@@ -82,4 +93,14 @@ export function sum(values: readonly string[], places: number): string | null {
 export function negate(value: string): string | null {
   const x = parse(value);
   return x ? text({ units: -x.units, places: x.places }) : null;
+}
+
+/** −1, 0 or 1 as a is below, equal to or above b; null when either is not a plain decimal. */
+export function compare(a: string, b: string): -1 | 0 | 1 | null {
+  const x = parse(a);
+  const y = parse(b);
+  if (!x || !y) return null;
+  const places = Math.max(x.places, y.places);
+  const diff = rescale(x, places).units - rescale(y, places).units;
+  return diff < 0n ? -1 : diff > 0n ? 1 : 0;
 }

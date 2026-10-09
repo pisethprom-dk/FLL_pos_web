@@ -1,0 +1,106 @@
+<!-- v1.1.0 -->
+@let p = payment;
+<div class="modal-head">
+  <h3 id="payment-view-title">Payment {{ p.number }}</h3>
+  <div class="spacer"></div>
+  <button type="button" class="modal-x" aria-label="Close" (click)="ref.close()">&times;</button>
+</div>
+<div class="form">
+  @if (p.status === 'VOID') {
+    <div class="note" style="margin-bottom: 16px">
+      Voided {{ p.voided_at | date: 'd MMM y, HH:mm' }} by {{ p.voided_by_name ?? '—' }}:
+      {{ p.void_reason }}. The invoices it paid are open again.
+    </div>
+  }
+  <div class="form-grid">
+    <div class="field">
+      <label for="pv-customer">Customer</label>
+      <input id="pv-customer" type="text" [value]="p.customer_name" readonly />
+    </div>
+    <div class="field">
+      <label for="pv-date">Date</label>
+      <input id="pv-date" type="text" [value]="p.payment_date | date: 'd MMM y'" readonly />
+    </div>
+    <div class="field">
+      <label for="pv-tender">Tender</label>
+      <input
+        id="pv-tender"
+        type="text"
+        [value]="tenderLabel(p.tender) + ' · ' + (p.currency ?? 'USD')"
+        readonly
+      />
+    </div>
+    <div class="field">
+      <label for="pv-amount">Amount</label>
+      <input
+        id="pv-amount"
+        type="text"
+        [value]="
+          p.currency === 'KHR'
+            ? (p.amount_tendered | khr) +
+              ' = ' +
+              (p.amount | usd) +
+              ' at ៛' +
+              (p.exchange_rate | rate)
+            : (p.amount | usd)
+        "
+        readonly
+      />
+    </div>
+    <div class="field">
+      <label for="pv-ref">Reference</label>
+      <input id="pv-ref" type="text" [value]="p.reference || '—'" readonly />
+    </div>
+    <div class="field">
+      <label for="pv-by">Taken by</label>
+      <input id="pv-by" type="text" [value]="p.taken_by_name ?? '—'" readonly />
+    </div>
+    @if (p.note) {
+      <div class="field wide">
+        <label for="pv-note">Note</label>
+        <input id="pv-note" type="text" [value]="p.note" readonly />
+      </div>
+    }
+  </div>
+</div>
+<div class="lines-wrap">
+  <table>
+    <thead>
+      <tr>
+        <th>Invoice</th>
+        <th class="r">Applied</th>
+      </tr>
+    </thead>
+    <tbody>
+      @for (a of p.allocations ?? []; track a.invoice) {
+        <tr>
+          <td class="num">{{ a.invoice_number }}</td>
+          <td class="r num">{{ a.amount | usd }}</td>
+        </tr>
+      }
+    </tbody>
+    <tfoot>
+      <tr>
+        <td>Applied in full</td>
+        <td class="r num">{{ p.amount | usd }}</td>
+      </tr>
+    </tfoot>
+  </table>
+</div>
+@if (printError()) {
+  <div class="form">
+    <p class="form-error" role="alert">{{ printError() }}</p>
+  </div>
+}
+<div class="form-foot">
+  @if (p.status !== 'VOID') {
+    <button class="btn" type="button" [disabled]="printing()" (click)="print()">
+      {{ printing() ? 'Printing…' : 'Print' }}
+    </button>
+  }
+  <button class="btn ghost" type="button" (click)="ref.close()" cdkFocusInitial>Close</button>
+  @if (canVoid && p.status === 'POSTED') {
+    <div class="spacer"></div>
+    <button class="btn danger" type="button" (click)="voidPayment()">Void payment…</button>
+  }
+</div>

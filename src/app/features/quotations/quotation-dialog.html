@@ -1,0 +1,327 @@
+<!-- v1.1.0 -->
+@let q = quote();
+<div class="modal-head">
+  <h3 id="quote-title">{{ q ? 'Quotation ' + q.number : 'New quotation' }}</h3>
+  <div class="spacer"></div>
+  <button type="button" class="modal-x" aria-label="Close" (click)="close()">&times;</button>
+</div>
+<div class="form" [formGroup]="form">
+  <div class="note" style="margin-bottom: 16px">
+    @switch (status()) {
+      @case ('SENT') {
+        Sent — waiting on the customer. It can still be changed; saving re-prices every line at
+        today's list price.
+      }
+      @case ('ACCEPTED') {
+        Accepted {{ q!.accepted_at | date: 'd MMM y' }}. Lines can no longer be changed — a change
+        needs a new quotation. {{ q!.invoiced_total | usd }} of {{ q!.total | usd }} invoiced so
+        far.
+      }
+      @case ('INVOICED') {
+        Fully invoiced. Nothing is left to sell on this quotation.
+      }
+      @case ('REJECTED') {
+        Rejected{{ q!.note ? ': ' + q!.note : '.' }}
+      }
+      @default {
+        Draft — not yet sent. Prices are the customer's price tier; saving re-prices every line at
+        today's list price.
+      }
+    }
+    @if (q?.is_expired) {
+      <b>Valid until {{ q!.valid_until | date: 'd MMM y' }} — expired.</b> It can still be accepted
+      and invoiced; the till warns.
+    }
+  </div>
+  <div class="form-grid">
+    <div class="field">
+      <label for="quote-customer">Customer</label>
+      @if (q) {
+        <input id="quote-customer" type="text" [value]="q.customer_name" readonly />
+      } @else {
+        <select id="quote-customer" formControlName="customer" cdkFocusInitial>
+          <option [ngValue]="null" disabled>Choose a store customer…</option>
+          @for (c of data.customers; track c.id) {
+            <option [ngValue]="c.id">{{ c.name }}</option>
+          }
+        </select>
+        <span class="hint">Store customers only — a walk-in sells straight to invoice.</span>
+      }
+      @if (invalid('customer')) {
+        <span class="hint warn">Choose who the quotation is for.</span>
+      }
+      @for (message of errorsFor('customer'); track $index) {
+        <span class="hint warn">{{ message }}</span>
+      }
+    </div>
+    <div class="field">
+      <label for="quote-tier">Price</label>
+      <input id="quote-tier" type="text" [value]="tier() ? tierLabel(tier()!) : '—'" readonly />
+      <span class="hint">The customer's price tier, stamped on each line.</span>
+    </div>
+    <div class="field">
+      <label for="quote-date">Quote date</label>
+      <input id="quote-date" type="date" formControlName="quote_date" />
+      @if (invalid('quote_date')) {
+        <span class="hint warn">Choose the date of the quotation.</span>
+      }
+      @for (message of errorsFor('quote_date'); track $index) {
+        <span class="hint warn">{{ message }}</span>
+      }
+    </div>
+    <div class="field">
+      <label for="quote-valid">Valid until</label>
+      <input id="quote-valid" type="date" formControlName="valid_until" />
+      @if (!q) {
+        <span class="hint">Blank: 30 days after the quote date.</span>
+      }
+      @for (message of errorsFor('valid_until'); track $index) {
+        <span class="hint warn">{{ message }}</span>
+      }
+    </div>
+    <div class="field">
+      <label for="quote-number">Number</label>
+      <input id="quote-number" type="text" [value]="q?.number ?? 'Given on first save'" readonly />
+    </div>
+    <div class="field">
+      <label for="quote-status">Status</label>
+      <input id="quote-status" type="text" [value]="quoteState(status()).label" readonly />
+    </div>
+    <div class="field wide">
+      <label for="quote-terms">Terms</label>
+      <textarea
+        id="quote-terms"
+        formControlName="terms"
+        rows="2"
+        placeholder="Collection from the shop. Payment 30 days from each invoice."
+      ></textarea>
+    </div>
+    @if (status() !== 'REJECTED') {
+      <div class="field wide">
+        <label for="quote-note">Note</label>
+        <textarea id="quote-note" formControlName="note" rows="2"></textarea>
+      </div>
+    }
+  </div>
+</div>
+
+@if (editable()) {
+  <app-product-picker
+    [stockOnly]="false"
+    [disabled]="pickerHint() !== ''"
+    [hint]="pickerHint()"
+    (picked)="add($event)"
+  />
+  <div class="lines-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Product</th>
+          <th class="r">Qty</th>
+          <th class="r">Price</th>
+          <th class="r">Discount</th>
+          <th class="r">Net price</th>
+          <th class="r">Line total</th>
+          <th style="width: 34px"></th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (row of rows(); track row.key) {
+          @let p = priced(row);
+          <tr [formGroup]="row.form">
+            <td>
+              {{ row.name }}
+              <span class="cell-sub num">{{ row.code }} · {{ row.unit }}</span>
+            </td>
+            <td class="r">
+              <input
+                class="till-input w-qty"
+                [id]="'qty-' + row.key"
+                type="text"
+                inputmode="decimal"
+                formControlName="quantity"
+                [class.bad]="bad(row.form.controls.quantity)"
+                [attr.aria-label]="'Quantity, ' + row.code"
+              />
+            </td>
+            <td class="r num">{{ price(row) | usd }}</td>
+            <td class="r">
+              <div class="disc-cell">
+                <select
+                  formControlName="discount_type"
+                  [attr.aria-label]="'Discount type, ' + row.code"
+                >
+                  <option value="PERCENT">%</option>
+                  <option value="AMOUNT">$</option>
+                </select>
+                <input
+                  class="till-input w-disc"
+                  type="text"
+                  inputmode="decimal"
+                  formControlName="discount_value"
+                  placeholder="0"
+                  [class.locked]="row.fixed"
+                  [class.bad]="bad(row.form.controls.discount_value) || !!p?.problem"
+                  [attr.aria-label]="'Discount, ' + row.code"
+                />
+              </div>
+              @if (p?.problem) {
+                <span class="cell-note" role="alert">{{ p!.problem }}</span>
+              } @else if (row.fixed) {
+                <span class="cell-note calm">Price fixed</span>
+              } @else if (row.form.controls.discount_type.value === 'AMOUNT') {
+                <span class="cell-note calm">off each unit</span>
+              }
+            </td>
+            <td class="r num">{{ p?.net ?? null | usd }}</td>
+            <td class="r num">{{ p?.total ?? null | usd }}</td>
+            <td class="r">
+              <button
+                type="button"
+                class="rowlink"
+                title="Remove"
+                [attr.aria-label]="'Remove ' + row.code"
+                (click)="remove(row)"
+              >
+                &times;
+              </button>
+            </td>
+          </tr>
+        } @empty {
+          <tr>
+            <td colspan="7" class="muted">
+              No lines yet. Scan or type a code above, or choose a product.
+            </td>
+          </tr>
+        }
+      </tbody>
+      @if (rows().length > 0) {
+        <tfoot>
+          <tr>
+            <td colspan="5">{{ rows().length }} {{ rows().length === 1 ? 'line' : 'lines' }}</td>
+            <td class="r num">{{ total() | usd }}</td>
+            <td></td>
+          </tr>
+        </tfoot>
+      }
+    </table>
+  </div>
+} @else {
+  <div class="lines-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Product</th>
+          <th class="r">Quoted</th>
+          <th class="r">Price</th>
+          <th class="r">Discount</th>
+          <th class="r">Net price</th>
+          <th class="r">Line total</th>
+          <th class="r">Invoiced</th>
+          <th class="r">Remaining</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (line of q?.lines ?? []; track line.id) {
+          <tr>
+            <td>
+              {{ line.product_name }}
+              <span class="cell-sub num">{{ line.product_code }} · {{ line.unit_name }}</span>
+            </td>
+            <td class="r num">{{ line.quantity | qty }}</td>
+            <td class="r num">{{ line.unit_price | usd }}</td>
+            <td class="r num">{{ discountText(line) }}</td>
+            <td class="r num">{{ line.net_price | usd }}</td>
+            <td class="r num">{{ line.line_total | usd }}</td>
+            <td class="r num">{{ line.qty_invoiced | qty }}</td>
+            <td class="r num" [class.pos]="line.remaining === '0.00'">
+              {{ line.remaining | qty }}
+            </td>
+          </tr>
+        }
+      </tbody>
+      <tfoot>
+        <tr>
+          <td colspan="5">
+            {{ q?.lines?.length ?? 0 }} {{ q?.lines?.length === 1 ? 'line' : 'lines' }}
+          </td>
+          <td class="r num">{{ q?.total | usd }}</td>
+          <td class="r num" colspan="2">
+            {{ q?.invoiced_total | usd }} invoiced ·
+            {{ (q?.status === 'REJECTED' ? null : q?.remaining_total) | usd }} left
+          </td>
+        </tr>
+      </tfoot>
+    </table>
+  </div>
+}
+
+<div class="form">
+  @for (message of errorsFor('lines'); track $index) {
+    <p class="form-error" role="alert">{{ message }}</p>
+  }
+  @if (editable()) {
+    <div class="form-grid one">
+      <div class="field">
+        <span class="hint">
+          A discount is per line: a percent, or dollars off each unit, up to 15% — the limit is
+          absolute. No cost or exchange rate is held on a quotation; both are stamped when an
+          invoice is raised.
+        </span>
+      </div>
+    </div>
+  }
+  @for (message of formErrors(); track $index) {
+    <p class="form-error" role="alert">{{ message }}</p>
+  }
+  @for (message of otherErrors(); track $index) {
+    <p class="form-error" role="alert">{{ message }}</p>
+  }
+</div>
+<div class="form-foot">
+  @if (editable()) {
+    <button class="btn" type="button" [disabled]="busy()" (click)="saveDraft()">
+      {{ status() === 'SENT' ? 'Save' : 'Save draft' }}
+    </button>
+    @if (status() === 'DRAFT') {
+      <button class="btn ghost" type="button" [disabled]="busy()" (click)="markSent()">
+        Mark sent
+      </button>
+    }
+    <button class="btn ghost" type="button" [disabled]="busy()" (click)="markAccepted()">
+      Mark accepted
+    </button>
+    @if (q) {
+      <button class="btn ghost" type="button" [disabled]="busy() || printing()" (click)="print()">
+        {{ printing() ? 'Printing…' : 'Print' }}
+      </button>
+    }
+    @if (busy()) {
+      <span class="muted" role="status">Working…</span>
+    }
+    <div class="spacer"></div>
+    @if (status() === 'DRAFT' && q) {
+      <button class="btn danger" type="button" [disabled]="busy()" (click)="deleteDraft()">
+        Delete draft
+      </button>
+    }
+    @if (status() === 'SENT') {
+      <button class="btn danger" type="button" [disabled]="busy()" (click)="reject()">
+        Reject…
+      </button>
+    }
+  } @else {
+    <button class="btn ghost" type="button" (click)="close()">Close</button>
+    @if (q && status() !== 'REJECTED') {
+      <button class="btn ghost" type="button" [disabled]="printing()" (click)="print()">
+        {{ printing() ? 'Printing…' : 'Print' }}
+      </button>
+    }
+    @if (status() === 'ACCEPTED' && q && canEdit) {
+      <div class="spacer"></div>
+      <button class="btn danger" type="button" [disabled]="busy()" (click)="reject()">
+        Reject…
+      </button>
+    }
+  }
+</div>

@@ -1,0 +1,89 @@
+<!-- v1.0.0 -->
+@let p = payment();
+@let h = shop();
+<div class="inv" [class.roll]="roll()" [class.page]="!roll()">
+  <app-print-shop [shop]="h" />
+
+  <div class="inv-title">
+    {{ t('paymentReceipt') }}
+    @if (copy()) {
+      <span class="inv-copy">{{ t('copy') }}</span>
+    }
+  </div>
+  <table class="inv-meta">
+    <tbody>
+      <tr>
+        <th>{{ t('number') }}</th>
+        <td>{{ p.number }}</td>
+      </tr>
+      <tr>
+        <th>{{ t('date') }}</th>
+        <td>{{ p.payment_date | date: 'd MMM y' }}</td>
+      </tr>
+      <tr>
+        <th>{{ t('customer') }}</th>
+        <td>{{ p.customer_name }}</td>
+      </tr>
+      @if (p.taken_by_name) {
+        <tr>
+          <th>{{ t('receivedBy') }}</th>
+          <td>{{ p.taken_by_name }}</td>
+        </tr>
+      }
+    </tbody>
+  </table>
+
+  <table class="inv-totals">
+    <tbody>
+      <tr class="inv-total">
+        <th>
+          {{ tender(p.tender) }}
+          @if (p.reference) {
+            <span class="inv-off">{{ p.reference }}</span>
+          }
+        </th>
+        <td>{{ p.currency === 'KHR' ? (p.amount_tendered | khr) : (p.amount | usd) }}</td>
+      </tr>
+      @if (p.currency === 'KHR') {
+        <tr>
+          <th>
+            =
+            @if (p.exchange_rate) {
+              <span class="inv-off">({{ t('rate') }} ៛{{ p.exchange_rate | rate }})</span>
+            }
+          </th>
+          <td>{{ p.amount | usd }}</td>
+        </tr>
+      }
+    </tbody>
+  </table>
+
+  <div class="inv-pay-title">{{ t('paidOff') }}</div>
+  <table class="inv-totals inv-allocations">
+    <tbody>
+      @for (a of p.allocations ?? []; track a.invoice) {
+        <tr>
+          <th>{{ a.invoice_number }}</th>
+          <td>{{ a.amount | usd }}</td>
+        </tr>
+      }
+      <tr class="inv-total">
+        <th>{{ t('total') }}</th>
+        <td>{{ p.amount | usd }}</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <table class="inv-totals inv-owed">
+    <tbody>
+      <tr class="inv-total">
+        <th>{{ t('stillOwed') }} {{ asOf() | date: 'd MMM y' }}</th>
+        <td>{{ owed() | usd }}</td>
+      </tr>
+    </tbody>
+  </table>
+
+  @if (h.receipt_footer) {
+    <footer class="inv-foot">{{ h.receipt_footer }}</footer>
+  }
+</div>

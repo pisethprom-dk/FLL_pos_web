@@ -1,4 +1,4 @@
-// v1.0.1 — added for the stock screens and the product picker; not in the
+// v1.0.2 — added for the stock screens and the product picker; not in the
 // mockup's CSS. The mockup wrote some inline (value colours) and did not need
 // the rest (a message under the picker, a wide line table on a phone, the
 // state of a counted line).
@@ -15,6 +15,8 @@
 // Tighter than a list's cells, so a line's inputs and figures fit across.
 .lines-wrap th,.lines-wrap td{padding:9px 12px;}
 .lines-wrap td:first-child{min-width:170px;}
+// A first column that only holds a checkbox (a payment's invoices) stays narrow.
+.lines-wrap td.tick{min-width:0;width:34px;}
 // A value that took stock out, and one that brought it in.
 .neg{color:var(--warn);}
 .pos{color:var(--good);}

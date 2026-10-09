@@ -1,4 +1,4 @@
-<!-- v1.0.0 -->
+<!-- v1.0.2 -->
 @let d = doc();
 @let r = reason();
 <div class="modal-head">
@@ -29,7 +29,11 @@
   <div class="form-grid">
     <div class="field">
       <label for="adj-reason">Reason</label>
-      <select id="adj-reason" formControlName="reason" cdkFocusInitial>
+      <select
+        id="adj-reason"
+        formControlName="reason"
+        [attr.cdkFocusInitial]="editable() ? '' : null"
+      >
         <option [ngValue]="null" disabled>Choose a reason…</option>
         @for (option of reasons; track option.value) {
           <option [ngValue]="option.value">
@@ -111,6 +115,9 @@
             <td>
               {{ row.name }}
               <span class="cell-sub num">{{ row.code }}</span>
+              @if (row.brandCategory) {
+                <span class="cell-sub">{{ row.brandCategory }}</span>
+              }
             </td>
             <td class="num">{{ row.shelf || '—' }}</td>
             <td class="r num">{{ row.onHand | qty }}</td>
@@ -190,6 +197,9 @@
             <td>
               {{ line.product_name }}
               <span class="cell-sub num">{{ line.product_code }}</span>
+              @if (brandAndCategory(line); as kind) {
+                <span class="cell-sub">{{ kind }}</span>
+              }
             </td>
             <td class="num">{{ line.shelf_location || '—' }}</td>
             <td class="r num">{{ line.quantity | qty }}</td>

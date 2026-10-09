@@ -1,0 +1,33 @@
+<!-- v1.0.0 -->
+<form (submit)="$event.preventDefault(); hold()" novalidate>
+  <div class="modal-head">
+    <h3 id="hold-title">Hold this sale</h3>
+    <div class="spacer"></div>
+    <button type="button" class="modal-x" aria-label="Close" (click)="ref.close()">&times;</button>
+  </div>
+  <div class="form">
+    <div class="form-grid one">
+      <div class="field">
+        <label for="hold-label">Label</label>
+        <input
+          id="hold-label"
+          type="text"
+          [formControl]="label"
+          placeholder="Sok Shop — blue pickup"
+          cdkFocusInitial
+        />
+        <span class="hint">
+          To find it again under Held sales. A held sale keeps no stock and takes no number until it
+          is completed.
+        </span>
+        @if (label.touched && label.invalid) {
+          <span class="hint warn">Up to 60 characters.</span>
+        }
+      </div>
+    </div>
+  </div>
+  <div class="form-foot">
+    <button class="btn" type="submit">Hold</button>
+    <button class="btn ghost" type="button" (click)="ref.close()">Cancel</button>
+  </div>
+</form>

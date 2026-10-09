@@ -1,0 +1,180 @@
+<!-- v1.0.1 -->
+@let s = sale();
+@let h = shop();
+<div class="inv" [class.roll]="roll()" [class.page]="!roll()">
+  <app-print-shop [shop]="h" />
+
+  <div class="inv-title">
+    {{ t('invoice') }}
+    @if (copy()) {
+      <span class="inv-copy">{{ t('copy') }}</span>
+    }
+  </div>
+  <table class="inv-meta">
+    <tbody>
+      <tr>
+        <th>{{ t('number') }}</th>
+        <td>{{ s.number }}</td>
+      </tr>
+      <tr>
+        <th>{{ t('date') }}</th>
+        <td>{{ s.sale_date | date: 'd MMM y, HH:mm' }}</td>
+      </tr>
+      @if (h.receipt_show_seller && s.seller_name) {
+        <tr>
+          <th>{{ t('seller') }}</th>
+          <td>{{ s.seller_name }}</td>
+        </tr>
+      }
+      <tr>
+        <th>{{ t('customer') }}</th>
+        <td>{{ customer() }}</td>
+      </tr>
+      @if (s.walk_in_phone) {
+        <tr>
+          <th>{{ t('phone') }}</th>
+          <td>{{ s.walk_in_phone }}</td>
+        </tr>
+      }
+      @if (s.quotation_number) {
+        <tr>
+          <th>{{ t('quotation') }}</th>
+          <td>{{ s.quotation_number }}</td>
+        </tr>
+      }
+    </tbody>
+  </table>
+
+  @if (roll()) {
+    <div class="inv-lines">
+      @for (line of s.lines ?? []; track line.id) {
+        <div class="inv-line">
+          <div class="inv-item">{{ line.product_short_name || line.product_name }}</div>
+          <div class="inv-row">
+            <span>
+              {{ line.quantity | qty }} × {{ line.net_price | usd }}
+              @if (discount(line); as off) {
+                <span class="inv-off">({{ line.unit_price | usd }} {{ off }})</span>
+              }
+            </span>
+            <span>{{ line.line_total | usd }}</span>
+          </div>
+          @if (line.warranty_months) {
+            <div class="inv-note">{{ warranty(line.warranty_months) }}</div>
+          }
+        </div>
+      }
+    </div>
+  } @else {
+    <table class="inv-table">
+      <thead>
+        <tr>
+          <th>{{ t('item') }}</th>
+          <th class="r">{{ t('qty') }}</th>
+          <th class="r">{{ t('price') }}</th>
+          <th class="r">{{ t('discount') }}</th>
+          <th class="r">{{ t('amount') }}</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (line of s.lines ?? []; track line.id) {
+          <tr>
+            <td>
+              {{ line.product_name }}
+              <span class="inv-code">{{ line.product_code }}</span>
+              @if (line.warranty_months) {
+                <div class="inv-note">{{ warranty(line.warranty_months) }}</div>
+              }
+            </td>
+            <td class="r">{{ line.quantity | qty }} {{ line.unit_name }}</td>
+            <td class="r">{{ line.unit_price | usd }}</td>
+            <td class="r">{{ discount(line) ?? '' }}</td>
+            <td class="r">{{ line.line_total | usd }}</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  }
+
+  <table class="inv-totals">
+    <tbody>
+      @if (more(s.discount_total)) {
+        <tr>
+          <th>{{ t('discountGiven') }}</th>
+          <td>{{ s.discount_total | usd }}</td>
+        </tr>
+      }
+      <tr class="inv-total">
+        <th>{{ t('total') }}</th>
+        <td>{{ s.total | usd }}</td>
+      </tr>
+      @if (h.receipt_show_riel_total && s.total_khr) {
+        <tr>
+          <th>
+            {{ t('inRiel') }}
+            @if (h.receipt_show_rate_used && s.exchange_rate) {
+              <span class="inv-off">({{ t('rate') }} ៛{{ s.exchange_rate | rate }})</span>
+            }
+          </th>
+          <td>{{ s.total_khr | khr }}</td>
+        </tr>
+      }
+      @for (tender of s.tenders; track $index) {
+        <tr class="inv-tender">
+          <th>
+            {{ kind(tender.kind) }}
+            @if (tender.reference) {
+              <span class="inv-off">{{ tender.reference }}</span>
+            }
+          </th>
+          <td>{{ tender.currency === 'KHR' ? (tender.amount | khr) : (tender.amount | usd) }}</td>
+        </tr>
+      }
+      <tr>
+        <th>{{ t('paid') }}</th>
+        <td>{{ s.paid_now | usd }}</td>
+      </tr>
+      @if (more(s.change_due)) {
+        <tr>
+          <th>{{ t('change') }}</th>
+          <td>{{ s.change_usd | usd }} + {{ s.change_khr | khr }}</td>
+        </tr>
+      }
+      @if (more(s.on_credit)) {
+        <tr class="inv-total">
+          <th>{{ t('onCredit') }}</th>
+          <td>{{ s.on_credit | usd }}</td>
+        </tr>
+        @if (s.due_date) {
+          <tr>
+            <th>{{ t('due') }}</th>
+            <td>{{ s.due_date | date: 'd MMM y' }}</td>
+          </tr>
+        }
+      }
+    </tbody>
+  </table>
+
+  @if (notes().length) {
+    <section class="inv-pay">
+      <div class="inv-pay-title">{{ t('howToPay') }}</div>
+      @for (note of notes(); track note.id) {
+        <div class="inv-way">
+          @if (note.image) {
+            <img [src]="note.image" alt="" />
+          }
+          <div>
+            <b>{{ note.payment_type }}</b>
+            @if (note.payment_info) {
+              <div class="inv-info">{{ note.payment_info }}</div>
+            }
+          </div>
+        </div>
+      }
+    </section>
+  }
+
+  @if (h.receipt_footer) {
+    <footer class="inv-foot">{{ h.receipt_footer }}</footer>
+  }
+</div>

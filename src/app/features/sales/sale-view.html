@@ -1,0 +1,222 @@
+<!-- v1.1.0 -->
+@let s = sale;
+<div class="modal-head">
+  <h3 id="sale-view-title">
+    Sale {{ s.number }}
+    @if (s.status === 'VOID') {
+      <span class="pill low">Void</span>
+    }
+  </h3>
+  <div class="spacer"></div>
+  <button type="button" class="modal-x" aria-label="Close" (click)="ref.close()">&times;</button>
+</div>
+<div class="form">
+  @if (s.status === 'VOID') {
+    <div class="note" style="margin-bottom: 16px">
+      Voided {{ s.voided_at | date: 'd MMM y, HH:mm' }} by {{ s.voided_by_name ?? '—' }}:
+      {{ s.void_reason }}. Its stock went back; the number stays, marked Void.
+    </div>
+  }
+  <div class="form-grid">
+    <div class="field">
+      <label for="sv-date">Sold</label>
+      <input
+        id="sv-date"
+        type="text"
+        [value]="(s.sale_date | date: 'd MMM y, HH:mm') + ' · ' + (s.seller_name ?? '—')"
+        readonly
+      />
+    </div>
+    <div class="field">
+      <label for="sv-customer">Customer</label>
+      <input
+        id="sv-customer"
+        type="text"
+        [value]="
+          s.customer_name +
+          (s.walk_in_name ? ' · ' + s.walk_in_name : '') +
+          (s.walk_in_phone ? ' · ' + s.walk_in_phone : '')
+        "
+        readonly
+      />
+    </div>
+    <div class="field">
+      <label for="sv-tier">Price</label>
+      <input
+        id="sv-tier"
+        type="text"
+        [value]="s.price_tier === 'WHOLESALE' ? 'Wholesale' : 'Retail'"
+        readonly
+      />
+    </div>
+    <div class="field">
+      <label for="sv-quote">Quotation</label>
+      <input id="sv-quote" type="text" [value]="s.quotation_number ?? '—'" readonly />
+    </div>
+  </div>
+</div>
+
+<div class="lines-wrap">
+  <table>
+    <thead>
+      <tr>
+        <th>Product</th>
+        <th class="r">Qty</th>
+        <th class="r">Price</th>
+        <th class="r">Discount</th>
+        <th class="r">Net</th>
+        <th class="r">Total</th>
+      </tr>
+    </thead>
+    <tbody>
+      @for (line of s.lines ?? []; track line.id) {
+        <tr>
+          <td>
+            {{ line.product_name }}
+            <span class="cell-sub num">{{ line.product_code }}</span>
+          </td>
+          <td class="r num nowrap">
+            {{ line.quantity | qty }} <span class="muted">{{ line.unit_name }}</span>
+          </td>
+          <td class="r num">{{ line.unit_price | usd }}</td>
+          <td class="r num">{{ discountText(line) }}</td>
+          <td class="r num">{{ line.net_price | usd }}</td>
+          <td class="r num">{{ line.line_total | usd }}</td>
+        </tr>
+      }
+    </tbody>
+    <tfoot>
+      <tr>
+        <td colspan="5">
+          Total
+          @if (!isZero(s.discount_total)) {
+            <span class="muted">· discount given {{ s.discount_total | usd }}</span>
+          }
+        </td>
+        <td class="r num">{{ s.total | usd }}</td>
+      </tr>
+    </tfoot>
+  </table>
+</div>
+
+<div class="form">
+  <div class="form-grid">
+    <div class="field">
+      <label for="sv-khr">In riel</label>
+      <input
+        id="sv-khr"
+        type="text"
+        [value]="(s.total_khr | khr) + ' at ៛' + (s.exchange_rate | rate)"
+        readonly
+      />
+    </div>
+    <div class="field">
+      <label for="sv-paid">Paid now</label>
+      <input id="sv-paid" type="text" [value]="s.paid_now | usd" readonly />
+    </div>
+    <div class="field">
+      <label for="sv-credit">On credit</label>
+      <input
+        id="sv-credit"
+        type="text"
+        [value]="
+          isZero(s.on_credit)
+            ? '—'
+            : (s.on_credit | usd) + (s.due_date ? ' · due ' + (s.due_date | date: 'd MMM y') : '')
+        "
+        readonly
+      />
+    </div>
+    <div class="field">
+      <label for="sv-change">Change given</label>
+      <input
+        id="sv-change"
+        type="text"
+        [value]="
+          isZero(s.change_due)
+            ? '—'
+            : (s.change_usd | usd) +
+              ' + ' +
+              (s.change_khr | khr) +
+              ' (' +
+              (s.change_due | usd) +
+              ')'
+        "
+        readonly
+      />
+      @if (!isZero(s.rounding)) {
+        <span class="hint">Riel rounding: {{ s.rounding | usd }}.</span>
+      }
+    </div>
+    @if (seesCost) {
+      <div class="field wide">
+        <span class="hint">
+          Cost {{ s.cost_total | usd }} · profit {{ s.profit | usd }} — shown to an Admin only.
+        </span>
+      </div>
+    }
+  </div>
+</div>
+
+<div class="lines-wrap">
+  <table>
+    <thead>
+      <tr>
+        <th>Paid by</th>
+        <th class="r">Amount</th>
+        <th class="r">In dollars</th>
+        <th>Reference</th>
+      </tr>
+    </thead>
+    <tbody>
+      @for (t of s.tenders; track $index) {
+        <tr>
+          <td>{{ kindLabel(t.kind) }}</td>
+          <td class="r num">{{ t.currency === 'KHR' ? (t.amount | khr) : (t.amount | usd) }}</td>
+          <td class="r num">{{ t.amount_usd | usd }}</td>
+          <td class="num">{{ t.reference || '—' }}</td>
+        </tr>
+      }
+    </tbody>
+  </table>
+</div>
+
+<div class="form">
+  <div class="form-grid one">
+    <div class="field">
+      <span class="label-like">Returns against this sale</span>
+      @if (returns.hasValue()) {
+        @for (r of returns.value().results; track r.id) {
+          <span class="hint">
+            {{ r.number }} · {{ r.return_date | date: 'd MMM y' }} · {{ r.total | usd }} —
+            {{ r.reason }}
+          </span>
+        } @empty {
+          <span class="hint">None.</span>
+        }
+      } @else if (returns.error()) {
+        <span class="hint warn">The returns could not be loaded.</span>
+      } @else {
+        <span class="hint">Looking…</span>
+      }
+    </div>
+  </div>
+</div>
+
+@if (printError()) {
+  <div class="form">
+    <p class="form-error" role="alert">{{ printError() }}</p>
+  </div>
+}
+<div class="form-foot">
+  @if (sale.status !== 'VOID') {
+    <button class="btn" type="button" [disabled]="printing()" (click)="print()">
+      {{ printing() ? 'Printing…' : 'Print' }}
+    </button>
+  }
+  <button class="btn ghost" type="button" (click)="ref.close()" cdkFocusInitial>Close</button>
+  @if (canVoid) {
+    <div class="spacer"></div>
+    <button class="btn danger" type="button" (click)="voidSale()">Void…</button>
+  }
+</div>

@@ -1,6 +1,7 @@
-// v1.0.0 — every expected figure here is what Python's Decimal gives with
-// ROUND_HALF_UP, the backend's rounding.
-import { negate, over, sum, times } from './exact';
+// v1.1.0 — every expected figure here is what Python's Decimal gives:
+// ROUND_HALF_UP, the backend's rounding, or its default (half to even) where
+// a test says so.
+import { compare, negate, over, sum, times } from './exact';
 
 describe('exact decimal previews', () => {
   it('multiplies and rounds to the places asked for', () => {
@@ -14,6 +15,24 @@ describe('exact decimal previews', () => {
     expect(times('0.125', '1', 2)).toBe('0.13');
     expect(times('-0.125', '1', 2)).toBe('-0.13');
     expect(times('-2', '1.855', 2)).toBe('-3.71');
+  });
+
+  it("rounds a sale line's total half to even, as the server's default does", () => {
+    expect(times('1.25', '0.50', 2, 'half-even')).toBe('0.62');
+    expect(times('2.45', '0.5', 2, 'half-even')).toBe('1.22');
+    expect(times('0.135', '1', 2, 'half-even')).toBe('0.14');
+    expect(times('-0.125', '1', 2, 'half-even')).toBe('-0.12');
+    expect(times('52.40', '3', 2, 'half-even')).toBe('157.20');
+    // The same figure, half up: the two rules differ only on an exact half.
+    expect(times('1.25', '0.50', 2)).toBe('0.63');
+  });
+
+  it('compares two amounts, whatever their places', () => {
+    expect(compare('15.00', '15')).toBe(0);
+    expect(compare('15.01', '15')).toBe(1);
+    expect(compare('2', '10')).toBe(-1);
+    expect(compare('-3.70', '0')).toBe(-1);
+    expect(compare('abc', '1')).toBeNull();
   });
 
   it('divides to four places, as a unit cost is held', () => {

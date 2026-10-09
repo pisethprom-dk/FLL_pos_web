@@ -1,0 +1,139 @@
+<!-- v1.0.0 -->
+<div class="page">
+  <p class="page-intro">
+    A price offered to a store customer. Nothing moves until an accepted quote is invoiced, and a
+    quote may be invoiced in parts.
+  </p>
+
+  <div class="filters">
+    <select aria-label="Status" (change)="setStatus($any($event.target).value)">
+      <option value="open">Open quotes</option>
+      <option value="all">All quotes</option>
+      @for (s of statuses; track s.value) {
+        <option [value]="s.value">{{ s.label }}</option>
+      }
+    </select>
+    <select aria-label="Customer" (change)="setCustomer($any($event.target).value)">
+      <option value="">All customers</option>
+      @for (c of storeCustomers(); track c.id) {
+        <option [value]="c.id" [selected]="customer() === c.id">
+          {{ c.short_name || c.name }}{{ c.is_active === false ? ' (inactive)' : '' }}
+        </option>
+      }
+    </select>
+    <input
+      type="search"
+      aria-label="Search quotations"
+      placeholder="Search quote number"
+      (input)="type($any($event.target).value)"
+    />
+    <button
+      *hasScope="'quotation.edit'"
+      class="btn"
+      type="button"
+      [disabled]="!customers.hasValue()"
+      (click)="open(null)"
+    >
+      New quotation
+    </button>
+  </div>
+
+  @if (counts.hasValue()) {
+    <div class="tiles three">
+      <div class="tile">
+        <small>Open quotes</small>
+        <b class="num">{{ counts.value().open }}</b>
+        <div class="sub">Draft, sent or accepted</div>
+      </div>
+      <div class="tile">
+        <small>Sent, waiting on the customer</small>
+        <b class="num">{{ counts.value().sent }}</b>
+        <div class="sub">Not yet accepted</div>
+      </div>
+      <div class="tile">
+        <small>Accepted, still to invoice</small>
+        <b class="num">{{ counts.value().accepted }}</b>
+        <div class="sub" [class.ok]="counts.value().accepted > 0">Ready for the till</div>
+      </div>
+    </div>
+  }
+
+  @if (quotes.error(); as error) {
+    <app-load-error [error]="error" (retry)="quotes.reload()" />
+  } @else if (shown(); as list) {
+    <div class="panel">
+      <div class="panel-head">
+        <h3>Quotations</h3>
+        <div class="spacer"></div>
+        @if (quotes.isLoading()) {
+          <span class="muted" role="status">Updating…</span>
+        }
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>Number</th>
+            <th>Date</th>
+            <th>Customer</th>
+            <th>Valid until</th>
+            <th class="r">Total</th>
+            <th class="r">Invoiced</th>
+            <th class="r">Remaining</th>
+            <th>Status</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (quote of list.results; track quote.id) {
+            @let state = quoteState(quote.status);
+            <tr>
+              <td class="num nowrap">{{ quote.number }}</td>
+              <td class="nowrap">{{ quote.quote_date | date: 'd MMM y' }}</td>
+              <td>{{ quote.customer_name }}</td>
+              <td class="nowrap" [class.neg]="quote.is_expired">
+                {{ quote.valid_until | date: 'd MMM y' }}
+              </td>
+              <td class="r num">{{ quote.total | usd }}</td>
+              <td class="r num">{{ quote.invoiced_total | usd }}</td>
+              <td class="r num">
+                {{ quote.status === 'REJECTED' ? '—' : (quote.remaining_total | usd) }}
+              </td>
+              <td>
+                <span
+                  class="pill"
+                  [class.ok]="state.tone === 'ok'"
+                  [class.credit]="state.tone === 'credit'"
+                  [class.low]="state.tone === 'low'"
+                  >{{ state.label }}</span
+                >
+                @if (quote.is_expired) {
+                  <span class="pill low">Expired</span>
+                }
+                @if (quote.status === 'ACCEPTED' && quote.invoiced_total !== '0.00') {
+                  <span class="cell-sub">part invoiced</span>
+                }
+              </td>
+              <td class="r">
+                <button type="button" class="rowlink" (click)="open(quote)">Open</button>
+              </td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="9" class="muted">No quotation matches these filters.</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+      @if (list.count > list.results.length || page() > 1) {
+        <app-pager [count]="list.count" [page]="page()" (pageChange)="page.set($event)" />
+      } @else {
+        <div class="panel-note">
+          {{ list.count }} {{ list.count === 1 ? 'quotation' : 'quotations' }}. Only an accepted
+          quote can be invoiced; an expired one warns at the till but does not block.
+        </div>
+      }
+    </div>
+  } @else {
+    <p class="loading">Loading…</p>
+  }
+</div>

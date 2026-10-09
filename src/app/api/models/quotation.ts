@@ -13,7 +13,13 @@ export interface Quotation {
   accepted_at: string | null;
   created_by_name: string | null;
   customer: number;
+
+  /**
+   * Address, district and province on one line.
+   */
+  customer_address: string;
   customer_name: string;
+  customer_phone: string;
   id: number;
   invoiced_total: string;
   is_expired: boolean;

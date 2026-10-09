@@ -1,0 +1,79 @@
+<!-- v1.1.0 -->
+<div class="modal-head">
+  <h3 id="done-title">Sale completed</h3>
+  <div class="spacer"></div>
+  <button type="button" class="modal-x" aria-label="Close" (click)="ref.close()">&times;</button>
+</div>
+<div class="form">
+  <div class="form-grid">
+    <div class="field">
+      <label for="done-number">Invoice</label>
+      <input id="done-number" type="text" [value]="invoice.number" readonly />
+    </div>
+    <div class="field">
+      <label for="done-buyer">Customer</label>
+      <input id="done-buyer" type="text" [value]="buyer()" readonly />
+    </div>
+    <div class="field">
+      <label for="done-total">Total</label>
+      <input id="done-total" type="text" [value]="invoice.total | usd" readonly />
+    </div>
+    <div class="field">
+      <label for="done-khr">In riel</label>
+      <input id="done-khr" type="text" [value]="invoice.total_khr | khr" readonly />
+    </div>
+    <div class="field">
+      <label for="done-paid">Paid now</label>
+      <input id="done-paid" type="text" [value]="invoice.paid_now | usd" readonly />
+    </div>
+    <div class="field">
+      <label for="done-credit">On credit</label>
+      <input
+        id="done-credit"
+        type="text"
+        [value]="
+          onCredit
+            ? (invoice.on_credit | usd) + ' · due ' + (invoice.due_date | date: 'd MMM y')
+            : '—'
+        "
+        readonly
+      />
+    </div>
+    @if (change) {
+      <div class="field wide">
+        <label for="done-change">Change to hand back</label>
+        <input
+          id="done-change"
+          type="text"
+          [value]="
+            (invoice.change_due | usd) +
+            ' — ' +
+            (invoice.change_usd | usd) +
+            ' and ' +
+            (invoice.change_khr | khr)
+          "
+          readonly
+        />
+      </div>
+    }
+    <div class="field wide">
+      <span class="hint">
+        Stock is taken out, each line's cost is stamped, and the rate of ៛{{
+          invoice.exchange_rate | rate
+        }}
+        is saved with the invoice.
+      </span>
+    </div>
+  </div>
+</div>
+@if (printError()) {
+  <div class="form">
+    <p class="form-error" role="alert">{{ printError() }}</p>
+  </div>
+}
+<div class="form-foot">
+  <button class="btn" type="button" [disabled]="printing()" (click)="print()" cdkFocusInitial>
+    {{ printing() ? 'Printing…' : 'Print invoice' }}
+  </button>
+  <button class="btn ghost" type="button" (click)="ref.close()">New sale</button>
+</div>

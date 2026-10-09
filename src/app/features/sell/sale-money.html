@@ -1,0 +1,115 @@
+<!-- v1.0.0 -->
+<div class="panel" style="margin-bottom: 20px">
+  <div class="panel-head"><h3>Total</h3></div>
+  <div class="panel-body">
+    @if (sale.figures(); as f) {
+      <div class="sumline">
+        <span class="lbl">Subtotal</span><span class="num">{{ f.subtotal | usd }}</span>
+      </div>
+      <div class="sumline">
+        <span class="lbl">Discount given</span>
+        <span class="num">{{ above(f.discount) ? (less(f.discount) | usd) : '—' }}</span>
+      </div>
+      <div class="sumline big">
+        <span class="lbl">To pay</span><span class="num">{{ f.total | usd }}</span>
+      </div>
+      @if (sale.rateValue(); as rate) {
+        <div class="sumline khr">
+          <span>In riel at ៛{{ rate | rate }}</span
+          ><span class="num">{{ f.totalKhr | khr }}</span>
+        </div>
+      }
+    } @else {
+      <p class="muted" style="margin: 0">Put right the lines marked in red to see the total.</p>
+    }
+  </div>
+  <div class="panel-note">
+    A discount may be up to 15% a line. The limit is absolute — an Admin cannot go past it either.
+  </div>
+</div>
+
+<div class="panel" style="margin-bottom: 20px">
+  <div class="panel-head">
+    <h3>Payment</h3>
+    <div class="spacer"></div>
+    <button
+      type="button"
+      class="linkish"
+      [disabled]="!sale.settlement() || sale.lines().length === 0"
+      (click)="addPayment.emit()"
+    >
+      Add payment
+    </button>
+  </div>
+  <table>
+    <thead>
+      <tr>
+        <th>Type</th>
+        <th class="r">Tendered</th>
+        <th class="r">In USD</th>
+        <th style="width: 34px"></th>
+      </tr>
+    </thead>
+    <tbody>
+      @for (t of sale.tenders(); track t.key) {
+        <tr>
+          <td>
+            {{ tenderLabel(t) }}
+            @if (t.reference) {
+              <span class="cell-sub">{{ t.reference }}</span>
+            }
+          </td>
+          <td class="r num">{{ t.currency === 'KHR' ? (t.amount | khr) : (t.amount | usd) }}</td>
+          <td class="r num">{{ tenderUsd(t) | usd }}</td>
+          <td class="r">
+            <button
+              type="button"
+              class="rowlink"
+              title="Remove"
+              [attr.aria-label]="'Remove ' + tenderLabel(t)"
+              (click)="sale.removeTender(t.key)"
+            >
+              &times;
+            </button>
+          </td>
+        </tr>
+      } @empty {
+        <tr>
+          <td colspan="4" class="muted">No payment yet.</td>
+        </tr>
+      }
+    </tbody>
+  </table>
+  @if (sale.settlement(); as s) {
+    <div class="panel-body" style="border-top: 1px solid var(--line)">
+      <div class="sumline">
+        <span class="lbl">Paid now</span><span class="num">{{ s.paidNow | usd }}</span>
+      </div>
+      <div class="sumline">
+        <span class="lbl">On credit</span>
+        <span class="num">{{ above(s.onCredit) ? (s.onCredit | usd) : '—' }}</span>
+      </div>
+      @if (above(s.stillToCover)) {
+        <div class="sumline neg">
+          <span>Still to cover</span><span class="num">{{ s.stillToCover | usd }}</span>
+        </div>
+      }
+      <div class="sumline">
+        <span class="lbl">Change due</span><span class="num">{{ s.changeDue | usd }}</span>
+      </div>
+      @if (above(s.changeDue)) {
+        <div class="sumline khr">
+          <span>Change given</span>
+          <span class="num">{{ s.changeUsd | usd }} + {{ s.changeKhr | khr }}</span>
+        </div>
+      }
+    </div>
+  }
+</div>
+
+@if (creditNote(); as c) {
+  <div class="note" style="margin-bottom: 20px">
+    Credit of {{ c.onCredit | usd }} takes {{ c.name }} to {{ c.after | usd }} against a
+    {{ c.limit | usd }} limit. Due {{ c.due | date: 'd MMM y' }}.
+  </div>
+}

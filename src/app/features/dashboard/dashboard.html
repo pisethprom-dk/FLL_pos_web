@@ -1,7 +1,311 @@
-<!-- v1.0.0 -->
+<!-- v1.1.0 -->
 <div class="page">
-  <div class="placeholder">
-    <b>Dashboard</b>
-    Sales, stock and money owed will show here once the reports API is built (backend slice 6).
-  </div>
+  @if (dash.error(); as error) {
+    <app-load-error [error]="error" (retry)="dash.reload()" />
+  } @else if (dash.hasValue()) {
+    @let d = dash.value();
+
+    @if (d.sales; as s) {
+      @let t = s.today;
+      <div class="band">
+        <div class="lead">
+          <small>{{ s.seller === null ? 'Sales today' : 'Your sales today' }}</small>
+          <div class="usd num">{{ t.sales | usd }}</div>
+          <div class="khr num">{{ t.sales_khr | khr }}</div>
+        </div>
+        <div class="split">
+          <div>
+            <small>Transactions</small><b class="num">{{ t.invoices }}</b>
+          </div>
+          <div>
+            <small>Average sale</small><b class="num">{{ t.average | usd }}</b>
+          </div>
+          @if (t.profit !== null) {
+            <div>
+              <small>Gross profit</small><b class="num">{{ t.profit | usd }}</b>
+            </div>
+            <div>
+              <small>Margin</small><b class="num">{{ t.margin === null ? '—' : t.margin + '%' }}</b>
+            </div>
+          }
+        </div>
+      </div>
+    }
+
+    <!-- The money tiles, then the to-dos. A Seller sees none of the money, so
+         Below reorder joins the to-dos in one row of four. -->
+    @let money = !!d.cash_today || !!d.owed || d.stock?.value != null;
+    @if (money) {
+      <div class="tiles" style="margin-bottom: 12px">
+        @if (d.cash_today; as c) {
+          <div class="tile">
+            <small>Cash taken today</small>
+            <b class="num">{{ c.total | usd }}</b>
+            <div class="sub num">
+              Sales {{ c.sales | usd }} · payments {{ c.payments | usd }} · refunds
+              {{ c.refunds | usd }}
+            </div>
+          </div>
+        }
+        @if (d.owed; as o) {
+          <div class="tile">
+            <small>Customers owe</small>
+            <b class="num">{{ o.owed | usd }}</b>
+            @if (o.over_90 === '0.00') {
+              <div class="sub ok">Nothing over 90 days</div>
+            } @else {
+              <div class="sub alert num">{{ o.over_90 | usd }} over 90 days</div>
+            }
+          </div>
+        }
+        @if (d.stock; as st) {
+          @if (st.value !== null) {
+            <div class="tile">
+              <small>Stock value at cost</small>
+              <b class="num">{{ st.value | usd }}</b>
+              <div class="sub ok">{{ st.products }} products</div>
+            </div>
+          }
+        }
+        <ng-container *ngTemplateOutlet="low" />
+      </div>
+    }
+    <div class="tiles" [class.three]="money">
+      @if (!money) {
+        <ng-container *ngTemplateOutlet="low" />
+      }
+      @if (d.held_sales !== null) {
+        <a class="tile" routerLink="/sell">
+          <small>Held sales</small>
+          <b class="num">{{ d.held_sales }}</b>
+          <div class="sub">{{ d.held_sales ? 'Waiting at the till' : 'None waiting' }}</div>
+        </a>
+      }
+      @if (d.quotations; as q) {
+        <a class="tile" routerLink="/quotations">
+          <small>Quotations to follow up</small>
+          <b class="num">{{ q.sent }}</b>
+          <div class="sub" [class.alert]="q.expiring > 0 || q.expired > 0">{{ followUp(q) }}</div>
+        </a>
+      }
+      @if (d.warranty; as w) {
+        <a class="tile" routerLink="/warranty">
+          <small>Open warranty claims</small>
+          <b class="num">{{ w.open }}</b>
+          <div class="sub" [class.alert]="w.out_of_warranty > 0">
+            {{
+              w.out_of_warranty ? w.out_of_warranty + ' out of warranty' : 'None out of warranty'
+            }}
+          </div>
+        </a>
+      }
+    </div>
+
+    <ng-template #low>
+      @if (d.stock; as st) {
+        <div class="tile">
+          <small>Below reorder level</small>
+          <b class="num">{{ st.below_reorder }}</b>
+          <div class="sub" [class.alert]="st.out_of_stock > 0">
+            {{ st.out_of_stock }} out of stock
+          </div>
+        </div>
+      }
+    </ng-template>
+
+    @if (d.sales; as s) {
+      <div class="grid2">
+        <div class="panel">
+          <div class="panel-head">
+            <h3>Sales, last 7 days</h3>
+            <div class="spacer"></div>
+            <a class="linkish" routerLink="/reports/daily-sales">Open daily sales</a>
+          </div>
+          <div class="panel-body">
+            <div class="bars">
+              @for (day of s.last_7_days; track day.date; let last = $last) {
+                <div class="col" [class.today]="last">
+                  <span class="val num">{{ day.sales | usd: 0 }}</span>
+                  <div class="bar" [style.height.%]="day.share"></div>
+                  <span class="cap">{{ last ? 'Today' : (day.date | date: 'EEE') }}</span>
+                </div>
+              }
+            </div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-head"><h3>Sales by category, today</h3></div>
+          <div class="panel-body">
+            @for (c of s.by_category; track c.name) {
+              <div class="hbar">
+                <div class="row">
+                  <span>{{ c.name }}</span
+                  ><span class="num">{{ c.sales | usd }}</span>
+                </div>
+                <div class="track"><div class="fill" [style.width.%]="c.share"></div></div>
+              </div>
+            } @empty {
+              <p class="muted">No sales yet today.</p>
+            }
+          </div>
+        </div>
+      </div>
+    }
+
+    <div class="grid2 even">
+      @if (d.sales; as s) {
+        <div class="panel">
+          <div class="panel-head">
+            <h3>{{ s.seller === null ? 'Recent sales' : 'Your recent sales' }}</h3>
+            <div class="spacer"></div>
+            <a class="linkish" routerLink="/sales">See all</a>
+          </div>
+          <table>
+            <thead>
+              <tr>
+                <th>Invoice</th>
+                <th>Customer</th>
+                <th>Paid by</th>
+                <th class="r">Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (r of s.recent; track r.id) {
+                @let paid = paidBy[r.paid_by];
+                <tr>
+                  <td class="nowrap">
+                    <button
+                      type="button"
+                      class="rowlink num"
+                      [disabled]="opening()"
+                      (click)="openSale(r)"
+                    >
+                      {{ r.number }}
+                    </button>
+                    <span class="cell-sub">{{ r.sale_date | date: 'd MMM, HH:mm' }}</span>
+                  </td>
+                  <td>
+                    {{ r.customer_name }}
+                    @if (r.walk_in_name) {
+                      <span class="cell-sub">{{ r.walk_in_name }}</span>
+                    }
+                  </td>
+                  <td>
+                    <span [class]="'pill ' + paid.tone">{{ paid.label }}</span>
+                  </td>
+                  <td class="r num">{{ r.total | usd }}</td>
+                </tr>
+              } @empty {
+                <tr>
+                  <td colspan="4" class="muted">No sales yet.</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+
+      @if (d.stock; as st) {
+        <div class="panel">
+          <div class="panel-head">
+            <h3>Running low</h3>
+            <div class="spacer"></div>
+            <a class="linkish" routerLink="/reports/stock-on-hand">Open stock on hand</a>
+          </div>
+          <table>
+            <thead>
+              <tr>
+                <th>Product</th>
+                <th class="r">On hand</th>
+                <th class="r nowrap">Reorder at</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (p of st.running_low; track p.product) {
+                <tr>
+                  <td>
+                    {{ p.name }}
+                    <span class="cell-sub num">{{ p.code }}</span>
+                  </td>
+                  <td class="r num nowrap" [class.neg]="p.status === 'OUT'">
+                    {{ p.qty_on_hand | qty }} <span class="muted">{{ p.unit_name }}</span>
+                  </td>
+                  <td class="r num">{{ p.reorder_level | qty }}</td>
+                </tr>
+              } @empty {
+                <tr>
+                  <td colspan="3" class="muted">Nothing is below its reorder level.</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+          @if (st.more) {
+            <div class="panel-note">And {{ st.more }} more below their reorder level.</div>
+          }
+        </div>
+      }
+    </div>
+
+    @if (d.owed; as o) {
+      <div class="panel">
+        <div class="panel-head">
+          <h3>Money owed to the shop</h3>
+          <div class="spacer"></div>
+          <a class="linkish" routerLink="/reports/receivables">Open receivables</a>
+        </div>
+        <div class="report-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Customer</th>
+                <th class="r nowrap">0–30 days</th>
+                <th class="r">31–60</th>
+                <th class="r">61–90</th>
+                <th class="r nowrap">Over 90</th>
+                <th class="r">Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (r of o.rows; track r.customer) {
+                <tr>
+                  <td>{{ r.name }}</td>
+                  <td class="r num">{{ r.d0_30 | usd }}</td>
+                  <td class="r num">{{ r.d31_60 | usd }}</td>
+                  <td class="r num">{{ r.d61_90 | usd }}</td>
+                  <td class="r num" [class.neg]="r.over_90 !== '0.00'">{{ r.over_90 | usd }}</td>
+                  <td class="r num">{{ r.owed | usd }}</td>
+                </tr>
+              } @empty {
+                <tr>
+                  <td colspan="6" class="muted">Nobody owes the shop anything.</td>
+                </tr>
+              }
+            </tbody>
+            @if (o.rows.length) {
+              @let t = o.totals;
+              <tfoot>
+                <tr>
+                  <td>{{ o.more ? 'Everyone who owes' : 'Total' }}</td>
+                  <td class="r num">{{ t.d0_30 | usd }}</td>
+                  <td class="r num">{{ t.d31_60 | usd }}</td>
+                  <td class="r num">{{ t.d61_90 | usd }}</td>
+                  <td class="r num">{{ t.over_90 | usd }}</td>
+                  <td class="r num">{{ t.owed | usd }}</td>
+                </tr>
+              </tfoot>
+            }
+          </table>
+        </div>
+        @if (o.more) {
+          <div class="panel-note">
+            And {{ o.more }} more {{ o.more === 1 ? 'customer who owes' : 'customers who owe' }} —
+            the total covers everyone.
+          </div>
+        }
+      </div>
+    }
+  } @else {
+    <p class="loading">Loading…</p>
+  }
 </div>

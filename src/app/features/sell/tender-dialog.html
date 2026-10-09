@@ -1,0 +1,87 @@
+<!-- v1.0.0 -->
+<form [formGroup]="form" (ngSubmit)="add()" novalidate>
+  <div class="modal-head">
+    <h3 id="tender-title">Add payment</h3>
+    <div class="spacer"></div>
+    <button type="button" class="modal-x" aria-label="Close" (click)="ref.close()">&times;</button>
+  </div>
+  <div class="form">
+    <div class="form-grid">
+      <div class="field">
+        <label for="tender-kind">Type</label>
+        <select id="tender-kind" formControlName="kind">
+          <option value="CASH">Cash</option>
+          <option value="KHQR">KHQR</option>
+          @if (data.credit) {
+            <option value="CREDIT">Credit · {{ data.credit.name }}</option>
+          }
+        </select>
+      </div>
+      <div class="field">
+        <label for="tender-currency">Currency</label>
+        @if (kind() === 'CREDIT') {
+          <input id="tender-currency" type="text" value="USD" readonly />
+          <span class="hint">Credit is recorded in dollars.</span>
+        } @else {
+          <select id="tender-currency" formControlName="currency">
+            <option value="USD">USD</option>
+            <option value="KHR">KHR</option>
+          </select>
+        }
+      </div>
+      <div class="field">
+        <label for="tender-amount"
+          >Amount {{ currency() === 'KHR' ? 'in riel' : 'in dollars' }}</label
+        >
+        <input
+          id="tender-amount"
+          type="text"
+          inputmode="decimal"
+          formControlName="amount"
+          cdkFocusInitial
+        />
+        @if (form.controls.amount.touched && form.controls.amount.invalid) {
+          <span class="hint warn">
+            {{
+              currency() === 'KHR' ? 'Whole riel, above zero.' : 'Dollars and cents, above zero.'
+            }}
+          </span>
+        }
+        @if (overRoom()) {
+          <span class="hint warn">
+            More than the {{ data.credit!.roomLeft | usd }} of credit left — the sale will be
+            refused.
+          </span>
+        }
+      </div>
+      <div class="field">
+        <label for="tender-usd">In USD</label>
+        <input id="tender-usd" type="text" [value]="inUsd() | usd" readonly />
+        <span class="hint">At ៛{{ data.rate | rate }}, the rate this sale is stamped with.</span>
+      </div>
+      @if (kind() === 'KHQR') {
+        <div class="field wide">
+          <label for="tender-ref">Reference</label>
+          <input
+            id="tender-ref"
+            type="text"
+            formControlName="reference"
+            placeholder="Transaction reference"
+          />
+        </div>
+      }
+      <div class="field wide">
+        <span class="hint">
+          Still to cover: {{ data.stillToCover | usd }} — {{ stillToCoverKhr | khr }}.
+          @if (!data.credit) {
+            Credit is offered only for a store customer allowed it and not on hold.
+          }
+        </span>
+      </div>
+    </div>
+  </div>
+  <div class="form-foot">
+    <button class="btn" type="submit">Add payment</button>
+    <button class="btn ghost" type="button" (click)="ref.close()">Cancel</button>
+  </div>
+</form>

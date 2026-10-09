@@ -1,0 +1,54 @@
+<!-- v1.0.0 -->
+<div class="page">
+  <div class="till">
+    <div>
+      <div class="panel" style="margin-bottom: 20px">
+        <app-sale-buyer
+          [account]="account.hasValue() ? account.value() : null"
+          (kindChange)="chooseKind($event)"
+          (customerChange)="pickCustomer()"
+          (quoteChange)="pickQuote()"
+        />
+        <app-sale-lines />
+      </div>
+    </div>
+    <div>
+      <app-sale-money
+        [creditNote]="creditNote()"
+        [creditName]="account.hasValue() ? account.value().name : 'customer'"
+        (addPayment)="addPayment()"
+      />
+      @if (notice()) {
+        <div class="note" role="status" style="margin-bottom: 20px">{{ notice() }}</div>
+      }
+      @for (message of errors(); track $index) {
+        <p class="form-error" role="alert" style="margin: 0 0 12px">{{ message }}</p>
+      }
+      <div class="panel">
+        <div class="form-foot" style="border-top: 0; flex-wrap: wrap">
+          <button class="btn" type="button" [disabled]="busy() || !!blocker()" (click)="complete()">
+            {{ busy() ? 'Working…' : 'Complete sale' }}
+          </button>
+          <button
+            class="btn ghost"
+            type="button"
+            [disabled]="busy() || !canHold()"
+            (click)="hold()"
+          >
+            Hold sale
+          </button>
+          <button class="btn ghost" type="button" [disabled]="busy()" (click)="openHeld()">
+            Held sales ({{ heldCount.hasValue() ? heldCount.value() : '…' }})
+          </button>
+          <div class="spacer"></div>
+          <button class="btn danger" type="button" [disabled]="busy()" (click)="cancel()">
+            Cancel sale
+          </button>
+        </div>
+        @if (blocker() && sale.lines().length > 0) {
+          <div class="panel-note" style="border-top: 0; padding-top: 0">{{ blocker() }}</div>
+        }
+      </div>
+    </div>
+  </div>
+</div>

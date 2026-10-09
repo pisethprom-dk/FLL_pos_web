@@ -16,10 +16,12 @@ export interface InvoiceLine {
   product?: number;
   product_code: string;
   product_name: string;
+  product_short_name: string;
   qty_returned: string;
   quantity: string;
   quote_line?: number | null;
   unit_cost: string | null;
   unit_name: string;
   unit_price: string;
+  warranty_months: number;
 }

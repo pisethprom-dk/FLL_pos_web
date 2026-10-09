@@ -1,0 +1,217 @@
+<!-- v1.0.1 -->
+<div class="page">
+  <p class="page-intro">
+    Sales completed in the period, by day, by seller and by how they were paid. Voided sales are
+    left out; returns are shown on their own rather than taken off.
+  </p>
+
+  <div class="filters">
+    <select aria-label="Period" (change)="setPeriod($any($event.target).value)">
+      @for (p of periods; track p.value) {
+        <option [value]="p.value" [selected]="period() === p.value">{{ p.label }}</option>
+      }
+    </select>
+    @if (period() === 'range') {
+      <input
+        type="date"
+        aria-label="From"
+        [value]="from()"
+        [max]="to() || today"
+        (change)="from.set($any($event.target).value)"
+      />
+      <input
+        type="date"
+        aria-label="To"
+        [value]="to()"
+        [min]="from()"
+        [max]="today"
+        (change)="to.set($any($event.target).value)"
+      />
+    }
+    @if (seesAll) {
+      <select aria-label="Seller" (change)="seller.set($any($event.target).value)">
+        <option value="" [selected]="seller() === ''">All sellers</option>
+        @if (staff.hasValue()) {
+          @for (u of staff.value(); track u.id) {
+            <option [value]="u.id" [selected]="seller() === '' + u.id">{{ u.full_name }}</option>
+          }
+        }
+      </select>
+    }
+  </div>
+
+  @if (report.error(); as error) {
+    <app-load-error [error]="error" (retry)="report.reload()" />
+  } @else if (shown(); as r) {
+    @let s = r.summary;
+    <div class="tiles" [class.three]="!seesCost" style="margin-bottom: 20px">
+      <div class="tile">
+        <small>Sales</small>
+        <b class="num">{{ s.sales | usd }}</b>
+        <div class="sub num">{{ s.sales_khr | khr }}</div>
+      </div>
+      @if (seesCost) {
+        <div class="tile">
+          <small>Gross profit</small>
+          <b class="num">{{ s.profit | usd }}</b>
+          <div class="sub">{{ s.margin === null ? '—' : s.margin + '% margin' }}</div>
+        </div>
+      }
+      <div class="tile">
+        <small>Invoices</small>
+        <b class="num">{{ s.invoices }}</b>
+        <div class="sub">average {{ s.average | usd }}</div>
+      </div>
+      <div class="tile">
+        <small>Returns</small>
+        <b class="num" [class.neg]="s.returns_count > 0">
+          {{ s.returns_count > 0 ? '−' : '' }}{{ s.returns_total | usd }}
+        </b>
+        <div class="sub">
+          {{ s.returns_count }} {{ s.returns_count === 1 ? 'document' : 'documents' }}
+        </div>
+      </div>
+    </div>
+
+    <div class="panel" style="margin-bottom: 20px">
+      <div class="panel-head">
+        <h3>
+          By day — {{ r.date_from | date: 'd MMM y' }}
+          @if (r.date_to !== r.date_from) {
+            to {{ r.date_to | date: 'd MMM y' }}
+          }
+        </h3>
+        <div class="spacer"></div>
+        @if (report.isLoading()) {
+          <span class="muted" role="status">Updating…</span>
+        }
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th class="r">Invoices</th>
+            <th class="r">Cash</th>
+            <th class="r">KHQR</th>
+            <th class="r">Credit</th>
+            <th class="r">Sales</th>
+            @if (seesCost) {
+              <th class="r">Cost</th>
+              <th class="r">Profit</th>
+            }
+          </tr>
+        </thead>
+        <tbody>
+          @for (d of r.by_day; track d.date) {
+            <tr>
+              <td class="nowrap">{{ d.date | date: 'EEE d MMM' }}</td>
+              <td class="r num">{{ d.invoices }}</td>
+              <td class="r num">{{ d.cash | usd }}</td>
+              <td class="r num">{{ d.khqr | usd }}</td>
+              <td class="r num">{{ d.credit | usd }}</td>
+              <td class="r num">{{ d.sales | usd }}</td>
+              @if (seesCost) {
+                <td class="r num">{{ d.cost | usd }}</td>
+                <td class="r num">{{ d.profit | usd }}</td>
+              }
+            </tr>
+          } @empty {
+            <tr>
+              <td [attr.colspan]="seesCost ? 8 : 6" class="muted">No sales in this period.</td>
+            </tr>
+          }
+        </tbody>
+        @if (r.by_day.length) {
+          <tfoot>
+            <tr>
+              <td>Total</td>
+              <td class="r num">{{ s.invoices }}</td>
+              <td class="r num">{{ tender(r, 'CASH') | usd }}</td>
+              <td class="r num">{{ tender(r, 'KHQR') | usd }}</td>
+              <td class="r num">{{ tender(r, 'CREDIT') | usd }}</td>
+              <td class="r num">{{ s.sales | usd }}</td>
+              @if (seesCost) {
+                <td class="r num">{{ s.cost | usd }}</td>
+                <td class="r num">{{ s.profit | usd }}</td>
+              }
+            </tr>
+          </tfoot>
+        }
+      </table>
+      <div class="panel-note">
+        Cash is what each sale came to less KHQR and credit — what stayed in the drawer after
+        change.
+        @if (seesCost) {
+          Cost is the figure stamped on each sale line when it was sold, so these numbers do not
+          change when stock is bought at a new price.
+        }
+      </div>
+    </div>
+
+    <div class="grid2" [class.even]="!seesAll">
+      @if (seesAll) {
+        <div class="panel">
+          <div class="panel-head"><h3>By seller</h3></div>
+          <table>
+            <thead>
+              <tr>
+                <th>Seller</th>
+                <th class="r">Invoices</th>
+                <th class="r">Sales</th>
+                <th class="r">Average</th>
+                <th class="r">Discount given</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (row of r.by_seller; track row.seller) {
+                <tr>
+                  <td>{{ row.seller_name ?? '—' }}</td>
+                  <td class="r num">{{ row.invoices }}</td>
+                  <td class="r num">{{ row.sales | usd }}</td>
+                  <td class="r num">{{ row.average | usd }}</td>
+                  <td class="r num">{{ row.discount | usd }}</td>
+                </tr>
+              } @empty {
+                <tr>
+                  <td colspan="5" class="muted">No sales in this period.</td>
+                </tr>
+              }
+            </tbody>
+            @if (r.by_seller.length) {
+              <tfoot>
+                <tr>
+                  <td>Total</td>
+                  <td class="r num">{{ s.invoices }}</td>
+                  <td class="r num">{{ s.sales | usd }}</td>
+                  <td class="r num">{{ s.average | usd }}</td>
+                  <td class="r num">{{ s.discount | usd }}</td>
+                </tr>
+              </tfoot>
+            }
+          </table>
+          <div class="panel-note">
+            Discount given is worth watching per seller — it is the number that moves quietly.
+          </div>
+        </div>
+      }
+      <div class="panel">
+        <div class="panel-head"><h3>By tender</h3></div>
+        <table>
+          <tbody>
+            @for (t of r.by_tender; track t.tender) {
+              <tr>
+                <td>{{ kindLabel(t.tender) }}</td>
+                <td class="r num">
+                  {{ t.amount | usd }}
+                  <span class="muted">· {{ t.share === null ? '—' : t.share + '%' }}</span>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+  } @else {
+    <p class="loading">Loading…</p>
+  }
+</div>

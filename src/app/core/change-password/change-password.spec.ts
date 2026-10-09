@@ -1,10 +1,11 @@
-// v1.2.0
+// v1.3.0
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { Router, TitleStrategy, provideRouter } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
 import { routes } from '../../app.routes';
+import { DASHBOARD, DASHBOARD_URL } from '../../features/reports/reports-testing';
 import { authInterceptor } from '../session/auth-interceptor';
 import { SessionStore } from '../session/session-store';
 import { BRAND, SELLER, answer, answerShell, signIn } from '../session/session-testing';
@@ -119,5 +120,6 @@ describe('ChangePassword', () => {
     page.querySelector<HTMLButtonElement>('.signin-actions .btn.ghost')!.click();
     await vi.waitFor(() => expect(url()).toBe('/'));
     answerShell(http);
+    await answer(http, DASHBOARD_URL, DASHBOARD);
   });
 });

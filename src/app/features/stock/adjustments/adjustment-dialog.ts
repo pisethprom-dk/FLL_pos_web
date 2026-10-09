@@ -1,4 +1,4 @@
-// v1.0.0 — one adjustment: any change in quantity that is not a purchase, a
+// v1.1.0 — one adjustment: any change in quantity that is not a purchase, a
 // sale or a count. The reason fixes the direction, so a quantity is always
 // typed above zero. Unit cost is the current average, stamped at posting —
 // except on an opening balance, which types its own, and only for a product
@@ -50,6 +50,7 @@ import {
   DocResult,
   QTY,
   REASONS,
+  brandAndCategory,
   canReverse,
   costPlaces,
   notFuture,
@@ -69,6 +70,8 @@ interface LineRow {
   readonly product: number;
   readonly code: string;
   readonly name: string;
+  /** "Makita · Drills", under the code. */
+  readonly brandCategory: string;
   readonly shelf: string;
   /** On hand now — not what it will be when posted. */
   readonly onHand: string;
@@ -97,6 +100,7 @@ export class AdjustmentDialog {
   protected readonly ref = inject<DialogRef<AdjustmentResult>>(DialogRef);
   protected readonly reasons = REASONS;
   protected readonly costPlaces = costPlaces;
+  protected readonly brandAndCategory = brandAndCategory;
   protected readonly today = today();
 
   protected readonly doc = signal<Adjustment | null>(inject<Adjustment | null>(DIALOG_DATA));
@@ -199,6 +203,8 @@ export class AdjustmentDialog {
           product: full.id,
           code: full.code,
           name: full.name,
+          // From the lookup: it names the category alone, the full record with its group.
+          brandCategory: brandAndCategory(product),
           shelf: full.shelf_location ?? '',
           onHand: full.qty_on_hand,
           avgCost: full.avg_cost ?? null,
@@ -372,6 +378,7 @@ export class AdjustmentDialog {
           product: line.product,
           code: line.product_code,
           name: line.product_name,
+          brandCategory: brandAndCategory(line),
           shelf: line.shelf_location,
           onHand: line.on_hand,
           avgCost: line.current_avg_cost,
@@ -389,6 +396,7 @@ export class AdjustmentDialog {
     product: number;
     code: string;
     name: string;
+    brandCategory: string;
     shelf: string;
     onHand: string;
     avgCost: string | null;
@@ -406,6 +414,7 @@ export class AdjustmentDialog {
       product: start.product,
       code: start.code,
       name: start.name,
+      brandCategory: start.brandCategory,
       shelf: start.shelf,
       onHand: start.onHand,
       avgCost: start.avgCost,

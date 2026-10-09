@@ -1,4 +1,4 @@
-// v1.4.0 — every screen in the menu: its label, path, title and the scopes
+// v1.13.0 — every screen in the menu: its label, path, title and the scopes
 // that open it. The menu and the route guards both read from here, so they
 // cannot disagree. Set `ready` to true when a screen is built; until then the
 // menu shows it greyed out.
@@ -20,34 +20,35 @@ export const SCREENS = {
   // A placeholder until the reports API (backend slice 6).
   dashboard: { label: 'Dashboard', title: 'Dashboard', path: '', scopes: [], ready: true },
 
-  sell: { label: 'Sell', title: 'Sell', path: 'sell', scopes: ['sell'], ready: false },
+  sell: { label: 'Till', title: 'Till', path: 'sell', scopes: ['sell'], ready: true },
+  sales: { label: 'Sales', title: 'Sales', path: 'sales', scopes: ['sell'], ready: true },
   quotations: {
     label: 'Quotations',
     title: 'Quotations',
     path: 'quotations',
     scopes: ['quotation.view'],
-    ready: false,
+    ready: true,
   },
   payments: {
     label: 'Customer payment',
     title: 'Customer payment',
     path: 'payments',
     scopes: ['payment.view'],
-    ready: false,
+    ready: true,
   },
   returns: {
     label: 'Returns & voids',
     title: 'Returns & voids',
     path: 'returns',
     scopes: ['return.view'],
-    ready: false,
+    ready: true,
   },
   warranty: {
     label: 'Warranty claims',
     title: 'Warranty claims',
     path: 'warranty',
     scopes: ['warranty.view'],
-    ready: false,
+    ready: true,
   },
   stockIn: {
     label: 'Stock in',
@@ -76,21 +77,21 @@ export const SCREENS = {
     title: 'Daily sales',
     path: 'reports/daily-sales',
     scopes: ['report.sales.all', 'report.sales.own'],
-    ready: false,
+    ready: true,
   },
   stockOnHand: {
     label: 'Stock on hand',
     title: 'Stock on hand',
     path: 'reports/stock-on-hand',
     scopes: ['report.stock'],
-    ready: false,
+    ready: true,
   },
   receivables: {
     label: 'Receivables',
     title: 'Receivables',
     path: 'reports/receivables',
     scopes: ['report.receivables'],
-    ready: false,
+    ready: true,
   },
 
   products: {
@@ -196,7 +197,7 @@ export const MENU: readonly MenuSection[] = [
   {
     heading: 'Operations',
     entries: [
-      'sell',
+      { group: 'sell', label: 'Sell', screens: ['sell', 'sales'] },
       'quotations',
       'payments',
       'returns',

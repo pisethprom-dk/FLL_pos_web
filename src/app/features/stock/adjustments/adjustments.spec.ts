@@ -1,4 +1,4 @@
-// v1.0.0
+// v1.1.0
 import { HttpTestingController, TestRequest } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { RouterTestingHarness } from '@angular/router/testing';
@@ -130,14 +130,9 @@ describe('Adjustments', () => {
     expect(row.querySelector('input[aria-label="Unit cost, TL-0118"]')).toBeNull();
     type(row, 'input[aria-label="Quantity, TL-0118"]', '2');
     await settle();
-    expect(texts(row, 'td').slice(0, 6)).toEqual([
-      'Angle grinder 100mm 570W TL-0118',
-      '—',
-      '3',
-      '',
-      '$38.9000',
-      '−$77.80',
-    ]);
+    // Brand and category from the lookup, which names the category without its group.
+    expect(texts(row, 'td:first-child .cell-sub')).toEqual(['TL-0118', 'Makita · Grinders']);
+    expect(texts(row, 'td').slice(1, 6)).toEqual(['—', '3', '', '$38.9000', '−$77.80']);
     expect(texts(card, 'tfoot td')[1]).toBe('−$77.80');
 
     press(card, 'Save draft');
@@ -210,13 +205,8 @@ describe('Adjustments', () => {
     await settle();
     const card = dialog();
     expect(card.querySelector('app-product-picker')).toBeNull();
-    expect(texts(card, 'tbody td')).toEqual([
-      'Angle grinder 100mm 570W TL-0118',
-      'A2-1',
-      '2',
-      '$38.9000',
-      '−$77.80',
-    ]);
+    expect(texts(card, 'tbody td:first-child .cell-sub')).toEqual(['TL-0118', 'Makita · Grinders']);
+    expect(texts(card, 'tbody td').slice(1)).toEqual(['A2-1', '2', '$38.9000', '−$77.80']);
     press(card, 'Reverse…');
     await settle();
     expect(find(dialog(), '.confirm-message').textContent).toContain(

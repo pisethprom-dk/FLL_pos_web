@@ -1,0 +1,116 @@
+<!-- v1.1.0 -->
+<app-product-picker
+  [stockOnly]="false"
+  [disabled]="sale.kind() === 'quote'"
+  hint="A sale from a quotation takes only the quotation's lines."
+  (picked)="sale.add($event)"
+/>
+<div class="lines-wrap">
+  <table class="till-lines">
+    <thead>
+      <tr>
+        <th>Product</th>
+        <th class="r">Qty</th>
+        <th class="r">Price</th>
+        <th class="r">Discount</th>
+        <th class="r">Total</th>
+        <th style="width: 34px"></th>
+      </tr>
+    </thead>
+    <tbody>
+      @for (line of sale.lines(); track line.key) {
+        @let p = sale.priced(line);
+        @let qtyProblem = sale.qtyProblem(line);
+        <tr>
+          <td>
+            {{ line.name }}
+            <span class="cell-sub num"
+              >{{ line.code }}{{ line.detail ? ' · ' + line.detail : '' }} · {{ line.unit }}</span
+            >
+          </td>
+          <td class="r">
+            <input
+              class="till-input w-qty"
+              type="text"
+              inputmode="decimal"
+              [value]="line.quantity"
+              [class.bad]="!!qtyProblem"
+              [attr.aria-label]="'Quantity, ' + line.code"
+              (input)="setQty(line, $any($event.target).value)"
+            />
+            @if (qtyProblem) {
+              <span class="cell-note" role="alert">{{ qtyProblem }}</span>
+            } @else if (sale.short(line)) {
+              <span class="cell-note">Only {{ line.onHand | qty }} on hand</span>
+            }
+          </td>
+          <td class="r num">{{ sale.price(line) | usd }}</td>
+          <td class="r">
+            <div class="disc-cell">
+              <select
+                [value]="line.discountType"
+                [disabled]="locked(line)"
+                [attr.aria-label]="'Discount type, ' + line.code"
+                (change)="setType(line, $any($event.target).value)"
+              >
+                <option value="PERCENT">%</option>
+                <option value="AMOUNT">$</option>
+              </select>
+              <input
+                class="till-input w-disc"
+                type="text"
+                inputmode="decimal"
+                placeholder="0"
+                [value]="line.discountValue"
+                [disabled]="locked(line)"
+                [class.locked]="locked(line)"
+                [class.bad]="!!p.problem"
+                [attr.aria-label]="'Discount, ' + line.code"
+                (input)="setDiscount(line, $any($event.target).value)"
+              />
+            </div>
+            @if (p.problem) {
+              <span class="cell-note" role="alert">{{ p.problem }}</span>
+            } @else if (line.fixed) {
+              <span class="cell-note calm">Price fixed</span>
+            } @else if (line.quoteLine !== null) {
+              <span class="cell-note calm">As quoted</span>
+            } @else if (p.net && p.net !== sale.price(line)) {
+              <span class="cell-note calm">{{ p.net | usd }} each</span>
+            }
+          </td>
+          <td class="r num">{{ p.total | usd }}</td>
+          <td class="r">
+            <button
+              type="button"
+              class="rowlink"
+              title="Remove"
+              [attr.aria-label]="'Remove ' + line.code"
+              (click)="sale.remove(line.key)"
+            >
+              &times;
+            </button>
+          </td>
+        </tr>
+      } @empty {
+        <tr>
+          <td colspan="6" class="muted">No lines yet. Scan a barcode or type a code above.</td>
+        </tr>
+      }
+    </tbody>
+    @if (sale.figures(); as f) {
+      @if (sale.lines().length > 0) {
+        <tfoot>
+          <tr>
+            <td colspan="4">
+              {{ sale.lines().length }} {{ sale.lines().length === 1 ? 'line' : 'lines' }} ·
+              {{ f.items | qty }} items
+            </td>
+            <td class="r num">{{ f.total | usd }}</td>
+            <td></td>
+          </tr>
+        </tfoot>
+      }
+    }
+  </table>
+</div>

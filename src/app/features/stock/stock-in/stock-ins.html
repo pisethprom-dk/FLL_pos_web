@@ -1,4 +1,4 @@
-<!-- v1.0.0 -->
+<!-- v1.0.1 -->
 <div class="page">
   <p class="page-intro">
     Goods received from a supplier. A draft changes nothing — posting writes the stock movements and
@@ -94,7 +94,7 @@
               <td>{{ doc.supplier_name }}</td>
               <td class="num">{{ doc.supplier_ref || '—' }}</td>
               <td class="r num">{{ doc.lines?.length ?? 0 }}</td>
-              <td class="r num">{{ doc.total | usd }}</td>
+              <td class="r num" [class.neg]="doc.total.startsWith('-')">{{ doc.total | usd }}</td>
               <td>
                 <span
                   class="pill"

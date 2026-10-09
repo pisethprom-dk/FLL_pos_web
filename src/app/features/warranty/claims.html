@@ -1,0 +1,127 @@
+<!-- v1.0.0 -->
+<div class="page">
+  <p class="page-intro">
+    A note of what a customer has claimed and where it has got to. No invoice is needed — the
+    warranty number identifies the item.
+  </p>
+
+  <div class="filters">
+    <select aria-label="Status" (change)="setStatus($any($event.target).value)">
+      <option value="open" [selected]="shownStatus() === 'open'">Open claims</option>
+      <option value="all" [selected]="shownStatus() === 'all'">All claims</option>
+      @for (s of statuses; track s.value) {
+        <option [value]="s.value" [selected]="shownStatus() === s.value">{{ s.label }}</option>
+      }
+    </select>
+    <input
+      type="search"
+      aria-label="Search claims"
+      placeholder="Search warranty number, product, customer or phone"
+      (input)="type($any($event.target).value)"
+    />
+    <button *hasScope="'warranty.edit'" class="btn" type="button" (click)="open(null)">
+      New claim
+    </button>
+  </div>
+
+  @if (counts.hasValue()) {
+    @let c = counts.value();
+    <div class="tiles">
+      <div class="tile">
+        <small>Open claims</small>
+        <b class="num">{{ c.open }}</b>
+        <div class="sub">Customers still waiting</div>
+      </div>
+      <div class="tile">
+        <small>Sent for repair</small>
+        <b class="num">{{ c.sent }}</b>
+        <div class="sub">With the repairer</div>
+      </div>
+      <div class="tile">
+        <small>Ready for collection</small>
+        <b class="num">{{ c.ready }}</b>
+        <div class="sub" [class.ok]="c.ready > 0">Call the customer</div>
+      </div>
+      <div class="tile">
+        <small>Out of warranty</small>
+        <b class="num">{{ c.expired }}</b>
+        <div class="sub" [class.alert]="c.expired > 0">Claimed after the end date</div>
+      </div>
+    </div>
+  }
+
+  @if (claims.error(); as error) {
+    <app-load-error [error]="error" (retry)="claims.reload()" />
+  } @else if (shown(); as list) {
+    <div class="panel">
+      <div class="panel-head">
+        <h3>Claims</h3>
+        <div class="spacer"></div>
+        @if (claims.isLoading()) {
+          <span class="muted" role="status">Updating…</span>
+        }
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>Warranty no</th>
+            <th>Product</th>
+            <th class="r">Duration</th>
+            <th>Expires</th>
+            <th>Customer</th>
+            <th>Note</th>
+            <th>Status</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (claim of list.results; track claim.id) {
+            @let state = stateOf(claim.status);
+            <tr>
+              <td class="num nowrap">{{ claim.warranty_number }}</td>
+              <td>
+                {{ claim.product_name }}
+                @if (claim.product_code) {
+                  <span class="cell-sub num">{{ claim.product_code }}</span>
+                }
+              </td>
+              <td class="r num nowrap">
+                {{ claim.warranty_months ? claim.warranty_months + ' months' : '—' }}
+              </td>
+              <td class="nowrap" [class.neg]="claim.out_of_warranty">
+                {{ claim.expiry_date ? (claim.expiry_date | date: 'd MMM y') : '—' }}
+              </td>
+              <td>
+                {{ claim.customer_name || '—' }}
+                @if (claim.customer_phone) {
+                  <span class="cell-sub num">{{ claim.customer_phone }}</span>
+                }
+              </td>
+              <td class="muted">{{ claim.note }}</td>
+              <td>
+                <span [class]="'pill ' + state.tone">{{ state.label }}</span>
+              </td>
+              <td class="r">
+                <button type="button" class="rowlink" (click)="open(claim)">Edit</button>
+              </td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="8" class="muted">No claim matches these filters.</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+      @if (list.count > list.results.length || page() > 1) {
+        <app-pager [count]="list.count" [page]="page()" (pageChange)="page.set($event)" />
+      } @else {
+        <div class="panel-note">
+          {{ list.count }} {{ list.count === 1 ? 'claim' : 'claims' }}. An expiry date in red means
+          the claim came after the warranty ended.
+        </div>
+      }
+    </div>
+  } @else {
+    <p class="loading">Loading…</p>
+  }
+</div>

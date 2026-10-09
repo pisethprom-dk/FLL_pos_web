@@ -1,4 +1,4 @@
-// v1.2.0 — the today band, figure tiles and the two bar charts.
+// v1.3.0 — the today band, figure tiles and the two bar charts.
 // Changed: the band in the sidebar's deep teal (option A).
 .band{
   background:var(--side);color:#fff;border-radius:var(--radius);
@@ -43,3 +43,7 @@
 // Added: a row of three tiles, where only three figures are true.
 .tiles.three{grid-template-columns:repeat(3,1fr);}
 @media (max-width:620px){.tiles.three{grid-template-columns:1fr;}}
+// Added: a tile that opens its screen (the dashboard's held sales, quotations
+// and warranty claims).
+a.tile{display:block;color:inherit;text-decoration:none;}
+a.tile:hover small{color:var(--primary);text-decoration:underline;text-underline-offset:2px;}

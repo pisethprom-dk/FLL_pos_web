@@ -1,6 +1,6 @@
-// v1.0.0 — what the three stock screens share: adjustment reasons, a
-// document's status, the period filter, and the number patterns their line
-// inputs accept (the backend's field sizes).
+// v1.1.0 — what the three stock screens share: adjustment reasons, a
+// document's status, the period filter, the number patterns their line
+// inputs accept (the backend's field sizes), and how a line names its product.
 import { AbstractControl, ValidationErrors, ValidatorFn, Validators } from '@angular/forms';
 import { ReasonEnum } from '../../api/models/reason-enum';
 import { daysBefore, today } from '../../shared/dates';
@@ -125,6 +125,18 @@ export type DocResult<T> = 'saved' | { readonly open: T };
 /** Four places when a cost uses them ("$0.0350"), two when it does not ("$26.40"). */
 export function costPlaces(value: string | null | undefined): number {
   return /\.\d{2}0*[1-9]/.test(value ?? '') ? 4 : 2;
+}
+
+/**
+ * The line under a product's code on a stock document: its brand and its
+ * category, "Makita · Drills" — just "Drills" when it has no brand (owner's
+ * choice, 2026-10-09).
+ */
+export function brandAndCategory(product: {
+  readonly brand_name?: string | null;
+  readonly category_name?: string | null;
+}): string {
+  return [product.brand_name, product.category_name].filter(Boolean).join(' · ');
 }
 
 /** Whether Reverse… is offered: posted, not itself a reversal, not reversed already. */

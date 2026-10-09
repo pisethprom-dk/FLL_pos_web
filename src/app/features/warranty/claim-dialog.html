@@ -1,0 +1,125 @@
+<!-- v1.0.1 -->
+<div class="modal-head">
+  <h3 id="claim-title">{{ claim ? 'Claim on ' + claim.warranty_number : 'New claim' }}</h3>
+  <div class="spacer"></div>
+  <button type="button" class="modal-x" aria-label="Close" (click)="ref.close()">&times;</button>
+</div>
+<app-product-picker
+  [stockOnly]="false"
+  addLabel="Use this product"
+  hint="Fills in the product's code, name and warranty months — each can be typed over."
+  (picked)="use($event)"
+/>
+<form [formGroup]="form" (ngSubmit)="save()" novalidate>
+  <div class="form">
+    @if (claim) {
+      <div class="note" style="margin-bottom: 16px">
+        Logged {{ claim.created_at | date: 'd MMM y, HH:mm' }} by {{ claim.logged_by_name ?? '—' }}
+        @if (claim.changed_by_name) {
+          · last changed {{ claim.updated_at | date: 'd MMM y, HH:mm' }} by
+          {{ claim.changed_by_name }}
+        }
+      </div>
+    }
+    <div class="form-grid">
+      <div class="field wide">
+        <label for="claim-number">Warranty number</label>
+        <input
+          id="claim-number"
+          type="text"
+          formControlName="warranty_number"
+          placeholder="WR-2026-0149"
+          cdkFocusInitial
+        />
+        <span class="hint">From the warranty card or the supplier's sticker.</span>
+        @if (invalid('warranty_number')) {
+          <span class="hint warn">The number on the warranty card.</span>
+        }
+        @for (message of errorsFor('warranty_number'); track $index) {
+          <span class="hint warn">{{ message }}</span>
+        }
+      </div>
+      <div class="field">
+        <label for="claim-code">Product code</label>
+        <input id="claim-code" type="text" formControlName="product_code" placeholder="TL-0101" />
+      </div>
+      <div class="field">
+        <label for="claim-product">Product name</label>
+        <input
+          id="claim-product"
+          type="text"
+          formControlName="product_name"
+          placeholder="Impact drill 13mm 710W"
+        />
+        @if (invalid('product_name')) {
+          <span class="hint warn">Say what the item is.</span>
+        }
+        @for (message of errorsFor('product_name'); track $index) {
+          <span class="hint warn">{{ message }}</span>
+        }
+      </div>
+      <div class="field">
+        <label for="claim-months">Warranty duration</label>
+        <input
+          id="claim-months"
+          type="text"
+          inputmode="numeric"
+          formControlName="warranty_months"
+        />
+        <span class="hint" [class.warn]="invalid('warranty_months')">
+          Months, 0 to 120. Zero if the item has none.
+        </span>
+      </div>
+      <div class="field">
+        <label for="claim-expiry">Expiry date</label>
+        <input id="claim-expiry" type="date" formControlName="expiry_date" />
+        @if (outOfWarranty()) {
+          <span class="hint warn">Out of warranty: it ended before the claim was logged.</span>
+        } @else {
+          <span class="hint">Red in the list when the claim came after it.</span>
+        }
+      </div>
+      <div class="field">
+        <label for="claim-customer">Customer name</label>
+        <input id="claim-customer" type="text" formControlName="customer_name" />
+      </div>
+      <div class="field">
+        <label for="claim-phone">Phone</label>
+        <input id="claim-phone" type="text" inputmode="tel" formControlName="customer_phone" />
+        <span class="hint">To call them when it is ready.</span>
+      </div>
+      <div class="field wide">
+        <label for="claim-status">Status</label>
+        <select id="claim-status" formControlName="status">
+          @for (s of statuses; track s.value) {
+            <option [value]="s.value">{{ s.label }}</option>
+          }
+        </select>
+      </div>
+      <div class="field wide">
+        <label for="claim-note">Note</label>
+        <textarea
+          id="claim-note"
+          formControlName="note"
+          rows="3"
+          placeholder="The fault, who it went to, what was agreed, when the customer was told"
+        ></textarea>
+      </div>
+    </div>
+    @for (message of formErrors(); track $index) {
+      <p class="form-error" role="alert">{{ message }}</p>
+    }
+  </div>
+  <div class="form-foot">
+    <button class="btn" type="submit" [disabled]="busy()">
+      {{ busy() ? 'Saving…' : 'Save claim' }}
+    </button>
+    <button class="btn ghost" type="button" (click)="ref.close()">Cancel</button>
+    @if (canDelete) {
+      <div class="spacer"></div>
+      <button class="btn danger" type="button" [disabled]="busy()" (click)="deleteClaim()">
+        Delete
+      </button>
+    }
+  </div>
+</form>

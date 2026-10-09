@@ -1,4 +1,4 @@
-// v1.0.0
+// v1.1.0
 import { HttpTestingController, TestRequest } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { RouterTestingHarness } from '@angular/router/testing';
@@ -183,15 +183,17 @@ describe('Stock count', () => {
 
     find<HTMLInputElement>(card, '.sheet-tools input[type=checkbox]').click();
     await settle();
-    expect(texts(card, 'tbody td:first-child')).toEqual([
-      'Combination spanner 10mm TL-0238',
-      'Adjustable wrench 250mm TL-0244',
+    expect(texts(card, 'tbody td:first-child .cell-sub')).toEqual([
+      'TL-0238',
+      'Wrenches',
+      'TL-0244',
+      'Total · Wrenches',
     ]);
     const words = find<HTMLInputElement>(card, '.sheet-tools input[type=search]');
     words.value = 'b2';
     words.dispatchEvent(new Event('input'));
     await settle();
-    expect(texts(card, 'tbody td:first-child')).toEqual(['Adjustable wrench 250mm TL-0244']);
+    expect(texts(card, 'tbody td:first-child .cell-sub')).toEqual(['TL-0244', 'Total · Wrenches']);
   });
 
   it('posts the differences once confirmed, then shows them', async () => {
@@ -215,10 +217,18 @@ describe('Stock count', () => {
       'Unit cost',
       'Value',
     ]);
-    expect(Array.from(card.querySelectorAll('tbody tr'), (tr) => texts(tr, 'td'))).toEqual([
-      ['Impact drill 13mm 710W TL-0101', 'A1-1', '12', '14', '−2', '$52.4000', '−$104.80'],
-      ['Rotary hammer 24mm TL-0103', 'A1-2', 'Not counted — skipped'],
+    expect(texts(card, 'tbody td:first-child .cell-sub')).toEqual([
+      'TL-0101',
+      'Bosch · Drills',
+      'TL-0103',
+      'Bosch · Rotary hammers',
     ]);
+    expect(Array.from(card.querySelectorAll('tbody tr'), (tr) => texts(tr, 'td').slice(1))).toEqual(
+      [
+        ['A1-1', '12', '14', '−2', '$52.4000', '−$104.80'],
+        ['A1-2', 'Not counted — skipped'],
+      ],
+    );
     expect(texts(card, 'tfoot td')).toEqual(['1 of 2 counted · 1 difference', '−$104.80']);
     press(card, 'Close');
     await reloaded();

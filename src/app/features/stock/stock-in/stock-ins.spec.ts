@@ -1,4 +1,4 @@
-// v1.0.0
+// v1.4.0
 import { HttpTestingController, TestRequest } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { RouterTestingHarness } from '@angular/router/testing';
@@ -137,6 +137,14 @@ describe('Stock in', () => {
     expect(rows[2][0]).toBe('GRN-000310 Reversed by GRN-000314');
     expect(rows[2][6]).toBe('Reversed');
     expect(rows[3][0]).toBe('GRN-000314 Reverses GRN-000312');
+    // A reversal took the goods back out: its value is negative, in the warning colour.
+    expect(rows[3][5]).toBe('−$314.40');
+    expect(screen.querySelectorAll('tbody tr')[3].querySelectorAll('td')[5].classList).toContain(
+      'neg',
+    );
+    expect(
+      screen.querySelectorAll('tbody tr')[0].querySelectorAll('td')[5].classList,
+    ).not.toContain('neg');
     expect(Array.from(screen.querySelectorAll('.tile'), (t) => texts(t, 'small, b'))).toEqual([
       ['Posted this month', '23'],
       ['Drafts waiting', '2'],
@@ -241,9 +249,12 @@ describe('Stock in', () => {
     await settle();
     press(card, 'Add product');
     await settle();
-    expect(texts(card, 'tbody td:first-child')).toEqual([
-      'Impact drill 13mm 710W TL-0101',
-      'Angle grinder 100mm 570W TL-0118',
+    // A picked product shows its brand and category under the code.
+    expect(texts(card, 'tbody td:first-child .cell-sub')).toEqual([
+      'TL-0101',
+      'Bosch · Drills',
+      'TL-0118',
+      'Makita · Grinders',
     ]);
   });
 
@@ -313,13 +324,17 @@ describe('Stock in', () => {
 
   it('shows a posted stock-in read-only, and reverses it with a reason', async () => {
     await open();
+    const warn = vi.spyOn(console, 'warn');
     openRow('GRN-000312');
     await answerDialog(false);
     const card = dialog();
     expect(card.querySelector('app-product-picker')).toBeNull();
     expect(find<HTMLSelectElement>(card, '#grn-supplier').disabled).toBe(true);
-    expect(texts(card, 'tbody td')).toEqual([
-      'Impact drill 13mm 710W TL-0101',
+    // The locked supplier is not asked to take the focus.
+    expect(warn.mock.calls.flat().join(' ')).not.toContain('cdkFocusInitial');
+    warn.mockRestore();
+    expect(texts(card, 'tbody td:first-child .cell-sub')).toEqual(['TL-0101', 'Bosch · Drills']);
+    expect(texts(card, 'tbody td').slice(1)).toEqual([
       'Piece',
       '6',
       '1',
@@ -350,6 +365,47 @@ describe('Stock in', () => {
     expect(find(dialog(), '.note').textContent).toContain('This reverses GRN-000312');
     expect(texts(dialog(), '.form-foot button')).toEqual(['Close']);
     press(dialog(), 'Close');
+    await settle();
+  });
+
+  it('downloads a template with the columns a stock-in import reads', async () => {
+    await open();
+    openRow('GRN-000313');
+    await answerDialog(true, [SCREW_LINK]);
+    press(dialog(), 'Import a list…');
+    await settle();
+
+    // The test browser saves no files: catch the file and the link instead.
+    const original = { create: URL.createObjectURL, revoke: URL.revokeObjectURL };
+    let file: Blob | undefined;
+    const revoke = vi.fn();
+    Object.assign(URL, {
+      createObjectURL: (blob: Blob) => ((file = blob), 'blob:template'),
+      revokeObjectURL: revoke,
+    });
+    const saved: { name: string; href: string }[] = [];
+    const click = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(function (
+      this: HTMLAnchorElement,
+    ) {
+      saved.push({ name: this.download, href: this.getAttribute('href')! });
+    });
+    try {
+      press(dialog(), 'Download template (stock-in-template.csv)');
+      await new Promise((resolve) => setTimeout(resolve));
+      expect(saved).toEqual([{ name: 'stock-in-template.csv', href: 'blob:template' }]);
+      // Reading it as text drops the UTF-8 mark, so look for it in the bytes.
+      expect([...new Uint8Array(await file!.arrayBuffer())].slice(0, 3)).toEqual([
+        0xef, 0xbb, 0xbf,
+      ]);
+      expect(await file!.text()).toBe(
+        'Product code,Product name,Quantity,Unit cost,Pack size,Pack unit\r\n',
+      );
+      expect(revoke).toHaveBeenCalledWith('blob:template');
+    } finally {
+      click.mockRestore();
+      Object.assign(URL, { createObjectURL: original.create, revokeObjectURL: original.revoke });
+    }
+    press(dialog(), 'Cancel');
     await settle();
   });
 
@@ -419,9 +475,12 @@ describe('Stock in', () => {
     });
     await settle();
     expect(dialogCount()).toBe(1);
-    expect(texts(dialog(), 'tbody td:first-child')).toEqual([
-      'Wood screw 4×40mm FX-0302',
-      'Impact drill 13mm 710W TL-0101',
+    // A product with no brand shows its category alone.
+    expect(texts(dialog(), 'tbody td:first-child .cell-sub')).toEqual([
+      'FX-0302',
+      'Fixings',
+      'TL-0101',
+      'Bosch · Drills',
     ]);
     expect(texts(dialog(), 'tfoot td').at(-2)).toBe('$367.20');
   });
