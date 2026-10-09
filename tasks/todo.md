@@ -1,4 +1,67 @@
-<!-- v1.18.6 -->
+<!-- v1.19.4 -->
+# Deploy the frontend at https://pos.bgs-badminton.store — the app alone first
+
+Asked (2026-10-09): put this frontend on the EC2 that runs the live backend,
+behind nginx, at https://pos.bgs-badminton.store. **Frontend only for now**
+(owner, 2026-10-09): the backend's nginx site, its `.env` and the bare
+domain stay as they are; connecting the app to the API is a later step.
+
+Found: `bgs-badminton.store` → 13.228.216.165 (nginx 1.18, Ubuntu); its
+site serves `/api/` and has `/var/www/pos` as its (empty) web root.
+`pos.bgs-badminton.store` has **no DNS record yet**. Both GitHub repos are
+public; the frontend's `main` is still at step 5b. The Angular build puts
+its 12 font files in `media/`, which the backend's nginx sends to Django's
+uploads — harmless today, broken once the app and the API share a name.
+
+Owner's choices: the same EC2; the owner runs every server step, pulling
+from GitHub; the work branch is merged into `main` first and the EC2 pulls
+`main`.
+
+## Design
+
+- **Its own nginx site** for `pos.bgs-badminton.store`
+  (`deploy/nginx/pos-frontend.conf` in this repo), beside the backend's
+  site, not in it. It serves the Angular build from its own folder,
+  `/var/www/pos-frontend` — not `/var/www/pos`, which the backend's site
+  serves, so `bgs-badminton.store/` is untouched. Unknown paths get
+  `index.html` (Angular's router takes them); `index.html` is never cached,
+  so a new deploy shows on the next load; the hashed JS, CSS and fonts are
+  cached a year and compressed.
+- **Its own certificate**: `certbot --nginx -d pos.bgs-badminton.store`
+  touches only the new site, so the API is never interrupted.
+- **Until the API step**, the page loads and says "POS back office" (the
+  shop's name comes from `/api/company/brand/`), and signing in fails —
+  nothing answers `/api/` on that name yet.
+- **`angular.json`**: the build's font folder is `fonts/`, not `media/`
+  (`outputPath.media`), so `/media/` can be Django's alone later.
+- **`deploy/deploy.sh`** (run on the EC2): `git pull`, `npm ci`, build,
+  copy `dist/pos_frontend/browser/` into `/var/www/pos-frontend`. Old files
+  are kept, so a tab open on the old version still loads its screens.
+- **`deploy/README.md`**: the step-by-step guide for the EC2.
+
+**Later, the API step** (its own plan): `/api/` and `/media/` on the pos
+site to Django, the two `.env` host settings, the bare domain redirecting.
+
+## Plan
+
+- [x] `angular.json` font folder; `deploy/nginx/pos-frontend.conf`;
+      `deploy/deploy.sh`; `deploy/README.md`; `CLAUDE.md`
+- [x] Tests and build on this Mac; the fonts land in `fonts/`; the nginx
+      file passes `nginx -t` (in a throwaway nginx container) and serves the
+      build there — a deep link, the fonts, `index.html` not cached
+- [ ] Commit and push to `operations-and-printing`; the owner merges it
+      into `main` on GitHub
+- [ ] The owner follows `deploy/README.md` on the EC2; Claude checks from
+      outside: the page, a deep link, the fonts, http → https, and that
+      `bgs-badminton.store` still answers as before
+- [ ] `CLAUDE.md` and the review below
+
+## Review
+
+(to be written when the work is done)
+
+---
+
 # Brand and category on stock document lines
 
 Asked (2026-10-09): on Stock in, the Product column shows the name and the

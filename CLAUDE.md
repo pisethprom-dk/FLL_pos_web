@@ -1,4 +1,4 @@
-<!-- v1.5.1 — handover context for Claude Code. Place at the repo root as CLAUDE.md. -->
+<!-- v1.5.2 — handover context for Claude Code. Place at the repo root as CLAUDE.md. -->
 
 # POS frontend — Angular 22
 
@@ -64,6 +64,19 @@ production. That is what lets the refresh cookie (`pos_refresh`, path
 If `nvm install` cannot find any version: `~/.zshrc` on this Mac sets
 `NVM_NODEJS_ORG_MIRROR` to the retired taobao mirror. Override it for the
 command: `NVM_NODEJS_ORG_MIRROR=https://nodejs.org/dist nvm install 22`.
+
+### Deploying
+
+Production is **https://pos.bgs-badminton.store**, on the EC2 that runs the
+backend (13.228.216.165), as its own nginx site
+(`deploy/nginx/pos-frontend.conf`) serving `/var/www/pos-frontend`. The
+owner deploys by pulling `main` on the EC2 and running `deploy/deploy.sh`
+(pull, `npm ci`, build, copy); the steps are in `deploy/README.md`. Merge
+into `main` before deploying. The app alone for now (2026-10-09): `/api/` is
+not yet connected on that name, so signing in there waits for the API step.
+
+The build's fonts go to `fonts/`, not Angular's default `media/`
+(`outputPath.media` in `angular.json`): `/media/` is Django's uploads.
 
 ---
 
