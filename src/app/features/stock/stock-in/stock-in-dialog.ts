@@ -1,4 +1,4 @@
-// v1.0.0 — one stock-in (GRN). A draft is filled in and posted here; a posted
+// v1.1.0 — one stock-in (GRN). A draft is filled in and posted here; a posted
 // one is read, and reversed if it was wrong. Each new line starts with the
 // supplier's usual pack (Partners → Supplier products). The figures on a line
 // are a preview worked out exactly as the server will (shared/money/exact.ts),
@@ -46,7 +46,16 @@ import { ProductPicker } from '../../../shared/product-picker/product-picker';
 import { clearOnEdit, dropFieldError } from '../../../shared/server-errors';
 import { ImportDialog, ImportDialogData } from '../import-dialog/import-dialog';
 import { reverseDialog } from '../reverse-dialog/reverse-dialog';
-import { COST, DocResult, QTY, canReverse, costPlaces, notFuture, positive } from '../stock-common';
+import {
+  COST,
+  DocResult,
+  QTY,
+  brandAndCategory,
+  canReverse,
+  costPlaces,
+  notFuture,
+  positive,
+} from '../stock-common';
 
 export type StockInResult = DocResult<StockIn>;
 
@@ -62,6 +71,8 @@ interface LineRow {
   readonly product: number;
   readonly code: string;
   readonly name: string;
+  /** "Makita · Drills", under the code. */
+  readonly brandCategory: string;
   /** The product's own unit — what its stock is counted in. */
   readonly unit: string;
   readonly form: LineForm;
@@ -71,6 +82,7 @@ interface LineStart {
   readonly product: number;
   readonly code: string;
   readonly name: string;
+  readonly brandCategory: string;
   readonly unit: string;
   readonly pack_unit: number | null;
   readonly packs: string;
@@ -104,6 +116,7 @@ export class StockInDialog {
   private readonly canPost = inject(SessionStore).hasAnyScope(['stock.post']);
   protected readonly ref = inject<DialogRef<StockInResult>>(DialogRef);
   protected readonly costPlaces = costPlaces;
+  protected readonly brandAndCategory = brandAndCategory;
   protected readonly today = today();
 
   protected readonly doc = signal<StockIn | null>(inject<StockIn | null>(DIALOG_DATA));
@@ -231,6 +244,7 @@ export class StockInDialog {
       product: product.id,
       code: product.code,
       name: product.name,
+      brandCategory: brandAndCategory(product),
       unit: product.unit_name,
       pack_unit: link?.pack_unit ?? null,
       packs: '',
@@ -363,6 +377,7 @@ export class StockInDialog {
           product: line.product,
           code: line.product_code,
           name: line.product_name,
+          brandCategory: brandAndCategory(line),
           unit: line.unit_name,
           pack_unit: line.pack_unit ?? null,
           packs: plainDecimal(line.packs),
@@ -400,6 +415,7 @@ export class StockInDialog {
       product: start.product,
       code: start.code,
       name: start.name,
+      brandCategory: start.brandCategory,
       unit: start.unit,
       form,
     };

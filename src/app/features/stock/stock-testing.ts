@@ -1,4 +1,4 @@
-// v1.1.0 — for the stock and supplier-link specs: documents, lookups and
+// v1.2.0 — for the stock and supplier-link specs: documents, lookups and
 // links as the API returns them, and a way to answer one URL by its params.
 import { HttpTestingController, TestRequest } from '@angular/common/http/testing';
 import { Adjustment } from '../../api/models/adjustment';
@@ -30,6 +30,7 @@ export const STOCK_UNITS: Unit[] = [...UNITS, BOX, CARTON];
 const lookup = (p: Partial<ProductLookup> & Pick<ProductLookup, 'id' | 'code' | 'name'>) =>
   ({
     brand_name: null,
+    category_name: 'Power tools',
     unit_name: 'Piece',
     qty_on_hand: '0.00',
     track_stock: true,
@@ -41,6 +42,7 @@ export const SCREW_LOOKUP = lookup({
   code: 'FX-0302',
   barcode: '8850000000302',
   name: 'Wood screw 4×40mm',
+  category_name: 'Fixings',
   unit_name: 'Box',
   qty_on_hand: '30.00',
   shelf_location: 'C1-4',
@@ -52,6 +54,7 @@ export const DRILL_LOOKUP = lookup({
   name: 'Impact drill 13mm 710W',
   model_no: 'GSB 550',
   brand_name: 'Bosch',
+  category_name: 'Drills',
   qty_on_hand: '14.00',
   shelf_location: 'A1-1',
 });
@@ -60,12 +63,14 @@ export const GRINDER_LOOKUP = lookup({
   code: 'TL-0118',
   name: 'Angle grinder 100mm 570W',
   brand_name: 'Makita',
+  category_name: 'Grinders',
   qty_on_hand: '3.00',
 });
 export const KEY_LOOKUP = lookup({
   id: 13,
   code: 'SV-0001',
   name: 'Key cutting',
+  category_name: 'Services',
   track_stock: false,
 });
 
@@ -135,6 +140,8 @@ export const GRN_DRAFT: StockIn = {
       product: 21,
       product_code: 'FX-0302',
       product_name: 'Wood screw 4×40mm',
+      brand_name: null,
+      category_name: 'Fixings',
       unit_name: 'Box',
       pack_unit: 7,
       pack_unit_name: 'Carton',
@@ -163,6 +170,8 @@ export const GRN_POSTED: StockIn = {
       product: 11,
       product_code: 'TL-0101',
       product_name: 'Impact drill 13mm 710W',
+      brand_name: 'Bosch',
+      category_name: 'Drills',
       unit_name: 'Piece',
       pack_unit: null,
       pack_unit_name: null,
@@ -216,6 +225,8 @@ export const ADJ_DRAFT: Adjustment = {
       product: 21,
       product_code: 'FX-0302',
       product_name: 'Wood screw 4×40mm',
+      brand_name: null,
+      category_name: 'Fixings',
       shelf_location: 'C1-4',
       on_hand: '30.00',
       current_avg_cost: '1.1000',
@@ -243,6 +254,8 @@ export const ADJ_POSTED: Adjustment = {
       product: 12,
       product_code: 'TL-0118',
       product_name: 'Angle grinder 100mm 570W',
+      brand_name: 'Makita',
+      category_name: 'Grinders',
       shelf_location: 'A2-1',
       on_hand: '3.00',
       current_avg_cost: '38.9000',
@@ -257,6 +270,8 @@ const countLine = (
   l: Partial<StockCountLine> &
     Pick<StockCountLine, 'id' | 'product' | 'product_code' | 'product_name'>,
 ): StockCountLine => ({
+  brand_name: null,
+  category_name: 'Wrenches',
   shelf_location: '',
   unit_name: 'Piece',
   counted_qty: null,
@@ -304,6 +319,7 @@ export const CNT_OPEN: StockCount = {
       product: 33,
       product_code: 'TL-0244',
       product_name: 'Adjustable wrench 250mm',
+      brand_name: 'Total',
       shelf_location: 'B2-1',
     }),
   ],
@@ -328,6 +344,8 @@ export const CNT_POSTED: StockCount = {
       product: 11,
       product_code: 'TL-0101',
       product_name: 'Impact drill 13mm 710W',
+      brand_name: 'Bosch',
+      category_name: 'Drills',
       shelf_location: 'A1-1',
       counted_qty: '12.00',
       expected_qty: '14.00',
@@ -340,6 +358,8 @@ export const CNT_POSTED: StockCount = {
       product: 40,
       product_code: 'TL-0103',
       product_name: 'Rotary hammer 24mm',
+      brand_name: 'Bosch',
+      category_name: 'Rotary hammers',
       shelf_location: 'A1-2',
     }),
   ],

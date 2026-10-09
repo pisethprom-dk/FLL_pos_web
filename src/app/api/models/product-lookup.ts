@@ -12,6 +12,7 @@ export interface ProductLookup {
    */
   barcode?: string | null;
   brand_name: string | null;
+  category_name: string;
   code: string;
   id: number;
 

@@ -1,4 +1,4 @@
-<!-- v1.0.0 -->
+<!-- v1.0.1 -->
 @let d = doc();
 <div class="modal-head">
   <h3 id="count-title">{{ counting() ? 'Counting ' + d.category_name : 'Count ' + d.number }}</h3>
@@ -84,6 +84,9 @@
             <td>
               {{ line.product_name }}
               <span class="cell-sub num">{{ line.product_code }}</span>
+              @if (brandAndCategory(line); as kind) {
+                <span class="cell-sub">{{ kind }}</span>
+              }
             </td>
             <td class="num">{{ line.shelf_location || '—' }}</td>
             <td>{{ line.unit_name }}</td>
@@ -142,6 +145,9 @@
             <td>
               {{ line.product_name }}
               <span class="cell-sub num">{{ line.product_code }}</span>
+              @if (brandAndCategory(line); as kind) {
+                <span class="cell-sub">{{ kind }}</span>
+              }
             </td>
             <td class="num">{{ line.shelf_location || '—' }}</td>
             @if (line.counted_qty === null) {

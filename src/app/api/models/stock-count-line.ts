@@ -7,6 +7,8 @@
  * once the count is posted.
  */
 export interface StockCountLine {
+  brand_name: string | null;
+  category_name: string;
   counted_at: string | null;
   counted_qty: string | null;
   difference: string | null;

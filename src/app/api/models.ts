@@ -139,6 +139,7 @@ export type { SalesReturnRequest } from './models/sales-return-request';
 export type { SalesSeller } from './models/sales-seller';
 export type { SalesTender } from './models/sales-tender';
 export type { Session } from './models/session';
+export type { SessionEnded } from './models/session-ended';
 export type { StockCount } from './models/stock-count';
 export type { StockCountLine } from './models/stock-count-line';
 export type { StockCountRequest } from './models/stock-count-request';

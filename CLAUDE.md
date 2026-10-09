@@ -1,4 +1,4 @@
-<!-- v1.5.0 — handover context for Claude Code. Place at the repo root as CLAUDE.md. -->
+<!-- v1.5.1 — handover context for Claude Code. Place at the repo root as CLAUDE.md. -->
 
 # POS frontend — Angular 22
 
@@ -244,6 +244,11 @@ Do not re-litigate these without asking.
   (to the Till), quotations sent and not answered (expiring within 7 days,
   expired), open warranty claims (out of warranty). Recent sales open read
   only, as from Sales. No auto-refresh, no comparison, no Export.
+- **Brand and category on stock lines** (added 2026-10-09, the owner's
+  request). On Stock in, Adjustments and Stock count, a line's Product cell
+  reads name, code, then "Makita · Drills" — the category's own name, not
+  its group; just the category when there is no brand. Both while a draft
+  is entered and on a posted document.
 
 ---
 
@@ -320,6 +325,10 @@ instead of greying it out.
   `features/stock/stock-common.ts`).
 - A refusal about a document's lines comes back as one entry per line;
   `readApiErrors()` reads it as "Line 2: …".
+- A line names its product's brand and category with `brandAndCategory()`
+  (`stock-common.ts`): from the product lookup for a line just picked, from
+  the line itself once saved. Specs read a cell's lines through its
+  `.cell-sub` spans — the text of the whole cell runs them together.
 
 **Patterns the quotations screen added:**
 

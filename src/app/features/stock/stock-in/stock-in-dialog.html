@@ -1,4 +1,4 @@
-<!-- v1.0.2 -->
+<!-- v1.0.3 -->
 @let d = doc();
 <div class="modal-head">
   <h3 id="grn-title">{{ d ? 'Stock in ' + d.number : 'New stock in' }}</h3>
@@ -102,6 +102,9 @@
             <td>
               {{ row.name }}
               <span class="cell-sub num">{{ row.code }}</span>
+              @if (row.brandCategory) {
+                <span class="cell-sub">{{ row.brandCategory }}</span>
+              }
             </td>
             <td>
               <select
@@ -210,6 +213,9 @@
             <td>
               {{ line.product_name }}
               <span class="cell-sub num">{{ line.product_code }}</span>
+              @if (brandAndCategory(line); as kind) {
+                <span class="cell-sub">{{ kind }}</span>
+              }
             </td>
             <td>{{ line.pack_unit_name ?? line.unit_name }}</td>
             <td class="r num">{{ line.packs | qty }}</td>

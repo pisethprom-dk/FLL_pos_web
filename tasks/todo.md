@@ -1,4 +1,73 @@
-<!-- v1.17.3 -->
+<!-- v1.18.6 -->
+# Brand and category on stock document lines
+
+Asked (2026-10-09): on Stock in, the Product column shows the name and the
+code; add the product's brand and category.
+
+Owner's choices: brand and category **together on one line** under the
+code ("Makita · Drills"); **just the category's name**, not its group;
+on **all three stock documents** — Stock in, Adjustments, Stock count.
+
+## Design
+
+- **Backend** (`../pos_backend`): each line carries `brand_name` (null when
+  the product has none) and `category_name` (the category's own name) —
+  `StockInLineSerializer`, `AdjustmentLineSerializer`,
+  `StockCountLineSerializer` in `inventory/serializers.py`; and the
+  product lookup (`ProductLookupSerializer`, `catalogue/serializers.py`)
+  gets `category_name`, so a line just picked shows it too. The lines'
+  querysets read brand and category in the same query (no query per line).
+  Schema kept at 0 warnings.
+- **Frontend**: one helper in `features/stock/stock-common.ts` makes the
+  line — "Makita · Drills", or just "Drills" for a product with no brand.
+  It goes as a third line in the Product cell, under the code, in both
+  views of each dialog (the rows being entered, and a posted document's
+  lines). A row added with the picker takes brand and category from it; a
+  saved, imported or posted line from the API.
+- Nothing else changes: no new column, no filter, the lists stay as they are.
+
+## Plan
+
+- [x] Backend: the two fields on the three line serializers and
+      `category_name` on the product lookup; brand and category read with
+      the lines; a test for each; all backend tests, schema at 0 warnings
+- [x] Regenerate the API client (`npm run api`) and build; add the new
+      fields to the test fixtures that need them
+- [x] Stock in: the brand · category line in both views; spec
+- [x] Adjustments: the same; spec
+- [x] Stock count: the same; spec
+- [x] Run all tests (both projects), the build and Prettier
+- [x] Look at GRN-000023, an adjustment and a count in the browser
+      (temporary check users, deleted afterwards — nothing else is changed)
+- [x] Update both `CLAUDE.md` files and write the review below
+
+## Review
+
+- **Backend**: `brand_name` and `category_name` on every stock-in,
+  adjustment and count line (`inventory/serializers.py`), read with the
+  lines in the same query (`inventory/views.py`); `category_name` on the
+  product lookup. One new test reads them off all three documents (a
+  product with no brand gives null); the lookup test checks the short name.
+  Sending "group → name" by mistake failed both. 255 backend tests; schema
+  at 0 warnings.
+- **Frontend**: `brandAndCategory()` in `stock-common.ts`; the third line
+  in the Product cell of `stock-in-dialog`, `adjustment-dialog` and
+  `count-dialog`, in both views. An adjustment line just picked takes it
+  from the lookup — its full record names the category with its group.
+  The three specs read the cell's lines one by one; leaving the brand off,
+  printing "null" for a product with none, and an adjustment taking the
+  full record's category each failed a test. 269 tests; build clean.
+- **Regenerated client** also took in the backend's committed one-session
+  change: a `SessionEnded` model and doc comments on the auth calls.
+  Nothing on screen uses them yet.
+- **Browser** (a temporary Admin, deleted afterwards; nothing saved):
+  GRN-000023 reads "Makita · Drills" and "Makita · Rotary hammers";
+  ADJ-000019 "Total · Screwdrivers"; CNT-000005 and the open Power tools
+  count CNT-000003 show every line's brand and category. No console errors.
+- `CLAUDE.md` (both): the decision, the pattern, the API fields.
+
+---
+
 # Sample sales data — two rows for each thin screen
 
 The catalogue and stock screens already hold plenty (88 products, 5

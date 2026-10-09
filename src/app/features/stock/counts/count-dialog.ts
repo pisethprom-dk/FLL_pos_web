@@ -1,4 +1,4 @@
-// v1.0.0 — one count: the sheet while counting, the differences once posted.
+// v1.1.0 — one count: the sheet while counting, the differences once posted.
 // Blind: the server sends no expected quantity until the count is posted, so
 // the sheet has no column for it (the backend's known gap with the mockup).
 // Each line is saved as it is entered — on Enter or on leaving the box —
@@ -20,7 +20,7 @@ import { Modal } from '../../../shared/dialog/modal';
 import { plainDecimal } from '../../../shared/money/decimal';
 import { QtyPipe, UsdPipe } from '../../../shared/money/money-pipes';
 import { reverseDialog } from '../reverse-dialog/reverse-dialog';
-import { DocResult, QTY, canReverse } from '../stock-common';
+import { DocResult, QTY, brandAndCategory, canReverse } from '../stock-common';
 
 export type CountResult = DocResult<StockCount>;
 
@@ -41,6 +41,7 @@ export class CountDialog {
   private readonly modal = inject(Modal);
   private readonly canPost = inject(SessionStore).hasAnyScope(['stock.post']);
   protected readonly ref = inject<DialogRef<CountResult>>(DialogRef);
+  protected readonly brandAndCategory = brandAndCategory;
 
   protected readonly doc = signal(inject<StockCount>(DIALOG_DATA));
   protected readonly counting = computed(() => this.canPost && this.doc().status === 'DRAFT');

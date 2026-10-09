@@ -1,4 +1,4 @@
-<!-- v1.0.1 -->
+<!-- v1.0.2 -->
 @let d = doc();
 @let r = reason();
 <div class="modal-head">
@@ -115,6 +115,9 @@
             <td>
               {{ row.name }}
               <span class="cell-sub num">{{ row.code }}</span>
+              @if (row.brandCategory) {
+                <span class="cell-sub">{{ row.brandCategory }}</span>
+              }
             </td>
             <td class="num">{{ row.shelf || '—' }}</td>
             <td class="r num">{{ row.onHand | qty }}</td>
@@ -194,6 +197,9 @@
             <td>
               {{ line.product_name }}
               <span class="cell-sub num">{{ line.product_code }}</span>
+              @if (brandAndCategory(line); as kind) {
+                <span class="cell-sub">{{ kind }}</span>
+              }
             </td>
             <td class="num">{{ line.shelf_location || '—' }}</td>
             <td class="r num">{{ line.quantity | qty }}</td>

@@ -43,6 +43,7 @@ export class AuthService extends BaseService {
 
   /**
    * Access token in the body, refresh token in an httpOnly cookie.
+   * Signing in ends this user's session on any other device.
    *
    * This method provides access to the full `HttpResponse`, allowing access to response headers.
    * To access only the response body, use `authLoginCreate$Json()` instead.
@@ -56,6 +57,7 @@ export class AuthService extends BaseService {
 
   /**
    * Access token in the body, refresh token in an httpOnly cookie.
+   * Signing in ends this user's session on any other device.
    *
    * This method provides access only to the response body.
    * To access the full response (for headers, for example), `authLoginCreate$Json$Response()` instead.
@@ -71,6 +73,7 @@ export class AuthService extends BaseService {
 
   /**
    * Access token in the body, refresh token in an httpOnly cookie.
+   * Signing in ends this user's session on any other device.
    *
    * This method provides access to the full `HttpResponse`, allowing access to response headers.
    * To access only the response body, use `authLoginCreate$XWwwFormUrlencoded()` instead.
@@ -84,6 +87,7 @@ export class AuthService extends BaseService {
 
   /**
    * Access token in the body, refresh token in an httpOnly cookie.
+   * Signing in ends this user's session on any other device.
    *
    * This method provides access only to the response body.
    * To access the full response (for headers, for example), `authLoginCreate$XWwwFormUrlencoded$Response()` instead.
@@ -99,6 +103,7 @@ export class AuthService extends BaseService {
 
   /**
    * Access token in the body, refresh token in an httpOnly cookie.
+   * Signing in ends this user's session on any other device.
    *
    * This method provides access to the full `HttpResponse`, allowing access to response headers.
    * To access only the response body, use `authLoginCreate$FormData()` instead.
@@ -112,6 +117,7 @@ export class AuthService extends BaseService {
 
   /**
    * Access token in the body, refresh token in an httpOnly cookie.
+   * Signing in ends this user's session on any other device.
    *
    * This method provides access only to the response body.
    * To access the full response (for headers, for example), `authLoginCreate$FormData$Response()` instead.
@@ -258,7 +264,7 @@ export class AuthService extends BaseService {
   static readonly AuthRefreshCreatePath = '/api/auth/refresh/';
 
   /**
-   * Reads the refresh cookie, rotates it, and returns a new access token.
+   * Reads the refresh cookie, rotates it, and returns a new access token. A 401 says why: session_replaced when the user has since signed in on another device, session_ended otherwise.
    *
    * This method provides access to the full `HttpResponse`, allowing access to response headers.
    * To access only the response body, use `authRefreshCreate()` instead.
@@ -271,7 +277,7 @@ export class AuthService extends BaseService {
   }
 
   /**
-   * Reads the refresh cookie, rotates it, and returns a new access token.
+   * Reads the refresh cookie, rotates it, and returns a new access token. A 401 says why: session_replaced when the user has since signed in on another device, session_ended otherwise.
    *
    * This method provides access only to the response body.
    * To access the full response (for headers, for example), `authRefreshCreate$Response()` instead.

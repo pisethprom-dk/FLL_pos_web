@@ -1,4 +1,4 @@
-// v1.3.0
+// v1.4.0
 import { HttpTestingController, TestRequest } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { RouterTestingHarness } from '@angular/router/testing';
@@ -249,9 +249,12 @@ describe('Stock in', () => {
     await settle();
     press(card, 'Add product');
     await settle();
-    expect(texts(card, 'tbody td:first-child')).toEqual([
-      'Impact drill 13mm 710W TL-0101',
-      'Angle grinder 100mm 570W TL-0118',
+    // A picked product shows its brand and category under the code.
+    expect(texts(card, 'tbody td:first-child .cell-sub')).toEqual([
+      'TL-0101',
+      'Bosch · Drills',
+      'TL-0118',
+      'Makita · Grinders',
     ]);
   });
 
@@ -330,8 +333,8 @@ describe('Stock in', () => {
     // The locked supplier is not asked to take the focus.
     expect(warn.mock.calls.flat().join(' ')).not.toContain('cdkFocusInitial');
     warn.mockRestore();
-    expect(texts(card, 'tbody td')).toEqual([
-      'Impact drill 13mm 710W TL-0101',
+    expect(texts(card, 'tbody td:first-child .cell-sub')).toEqual(['TL-0101', 'Bosch · Drills']);
+    expect(texts(card, 'tbody td').slice(1)).toEqual([
       'Piece',
       '6',
       '1',
@@ -472,9 +475,12 @@ describe('Stock in', () => {
     });
     await settle();
     expect(dialogCount()).toBe(1);
-    expect(texts(dialog(), 'tbody td:first-child')).toEqual([
-      'Wood screw 4×40mm FX-0302',
-      'Impact drill 13mm 710W TL-0101',
+    // A product with no brand shows its category alone.
+    expect(texts(dialog(), 'tbody td:first-child .cell-sub')).toEqual([
+      'FX-0302',
+      'Fixings',
+      'TL-0101',
+      'Bosch · Drills',
     ]);
     expect(texts(dialog(), 'tfoot td').at(-2)).toBe('$367.20');
   });

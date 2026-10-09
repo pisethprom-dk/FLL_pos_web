@@ -1,4 +1,4 @@
-// v1.0.1 — for the till's spec: customers as the till's lookup returns them,
+// v1.0.2 — for the till's spec: customers as the till's lookup returns them,
 // an account, products with both prices, and invoices held and completed.
 import { CustomerAccount } from '../../api/models/customer-account';
 import { CustomerLookup } from '../../api/models/customer-lookup';
@@ -67,6 +67,7 @@ export const LEVEL: ProductLookup = {
   barcode: '8850000000283',
   name: 'Spirit level 600mm',
   brand_name: 'Total',
+  category_name: 'Measuring',
   unit_name: 'Piece',
   qty_on_hand: '9.00',
   retail_price: '72.29',
